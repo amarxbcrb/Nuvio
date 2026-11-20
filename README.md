@@ -24,6 +24,14 @@ Pour le vendeur : création des clés et configuration dans [licence/LISEZMOI.md
 - Une seule branche, `main`. Chaque push construit les deux APK et publie une release.
 - Différences entre les deux éditions et règles de modification : [CLAUDE.md](CLAUDE.md).
 
+## Origine et crédits
+
+Ce projet n'est pas une création originale : c'est un fork non officiel de [Nuvio](https://github.com/NuvioMedia/NuvioMobile), développé par l'équipe NuvioMedia. Il reprend aussi des modifications de [NuvioMobile-Enhanced](https://github.com/luqmanfadlli/NuvioMobile-Enhanced). L'essentiel du code appartient à leurs auteurs. Ce fork ajoute surtout l'édition Nuvio Pro, la clé d'accès et des réglages.
+
+Ce projet n'est ni affilié ni soutenu par l'équipe Nuvio. « Nuvio » est le nom du projet d'origine.
+
+L'appli ne contient aucune source ni aucun contenu : chaque utilisateur ajoute les siens et en est responsable.
+
 ## Licence
 
-Fork non officiel de Nuvio, distribué sous [GPL-3.0](LICENSE). Il n'est ni affilié ni soutenu par l'équipe Nuvio.
+Distribué sous [GPL-3.0](LICENSE), comme le projet d'origine. Le code source complet, y compris celui de Nuvio Pro, reste public dans ce dépôt.
