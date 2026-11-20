@@ -6,10 +6,10 @@ Lecteur multimédia pour Android, basé sur [Nuvio](https://github.com/NuvioMedi
 
 | Version | Accès | Lien |
 |---------|-------|------|
-| **Nuvio Plus** | Gratuit | [NuvioPlus.apk](https://github.com/amarbcrb/Nuvio-enhanced-/releases/latest/download/NuvioPlus.apk) |
-| **Nuvio Pro** | Clé d'accès | [NuvioPro.apk](https://github.com/amarbcrb/Nuvio-enhanced-/releases/latest/download/NuvioPro.apk) |
+| **Nuvio Plus** | Gratuit | [NuvioPlus.apk](https://github.com/amarxbcrb/Nuvio/releases/latest/download/NuvioPlus.apk) |
+| **Nuvio Pro** | Clé d'accès | [NuvioPro.apk](https://github.com/amarxbcrb/Nuvio/releases/latest/download/NuvioPro.apk) |
 
-Toutes les versions : [Releases](https://github.com/amarbcrb/Nuvio-enhanced-/releases).
+Toutes les versions : [Releases](https://github.com/amarxbcrb/Nuvio/releases).
 
 Les deux applis s'installent côte à côte. Quand une nouvelle version sort, l'appli la propose en mise à jour : Nuvio Plus propose Nuvio Plus, Nuvio Pro propose Nuvio Pro.
 
