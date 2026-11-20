@@ -1,0 +1,138 @@
+package com.nuvio.app.features.streams
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+class StreamLanguageDetectorTest {
+    private fun detect(vararg texts: String, providerLanguage: String? = null) =
+        StreamLanguageDetector.detect(texts.toList(), providerLanguage)
+
+    @Test
+    fun readsFrenchDubAndSubtitledReleases() {
+        assertEquals("VF", detect("Movie.2023.TRUEFRENCH.1080p.WEB").label)
+        assertEquals(setOf("fr"), detect("Série S01E02 VOSTFR 720p").subtitles)
+        assertEquals("VOSTFR", detect("Série S01E02 VOSTFR 720p").label)
+        assertTrue(detect("Film MULTi 2160p").multi)
+    }
+
+    @Test
+    fun readsSubtitleMarkerFollowedByLanguage() {
+        val info = detect("Anime - 12 [SUB ENG]")
+        assertEquals(setOf("en"), info.subtitles)
+        assertTrue(info.audio.isEmpty())
+    }
+
+    @Test
+    fun ignoresLowerCaseShortWordsInTitles() {
+        val info = detect("Un homme en colère", "La casa de papel")
+        assertNull(info.label)
+    }
+
+    @Test
+    fun readsFlagsAndArabicWords() {
+        assertEquals(setOf("fr"), detect("1080p 🇫🇷").audio)
+        assertEquals(setOf("ar"), detect("مترجم").subtitles)
+        assertEquals("AR", detect("Server 1", providerLanguage = "ar").label)
+    }
+
+    @Test
+    fun filtersByPreferredLanguages() {
+        val frenchOnly = StreamLanguagePreferences(linkLanguages = setOf("fr"))
+        assertTrue(detect("VFF 1080p").matches(frenchOnly))
+        assertTrue(detect("VOSTFR").matches(frenchOnly))
+        assertFalse(detect("VOSTFR").matches(frenchOnly.copy(includeSubtitled = false)))
+        assertFalse(detect("ENGLISH 1080p").matches(frenchOnly))
+        assertTrue(detect("1080p").matches(frenchOnly))
+        assertFalse(detect("1080p").matches(frenchOnly.copy(hideUnknown = true)))
+        assertTrue(detect("MULTI").matches(frenchOnly.copy(hideUnknown = true)))
+    }
+
+    @Test
+    fun roundTripsPreferences() {
+        val preferences = StreamLanguagePreferences(
+            linkLanguages = setOf("fr", "en"),
+            includeSubtitled = false,
+            hideUnknown = true,
+            extensionLanguages = setOf("ar"),
+            dubMode = StreamDubMode.DubbedOnly,
+        )
+        assertEquals(preferences, StreamLanguagePreferences.decode(preferences.encode()))
+    }
+
+    @Test
+    fun ranksDubbedBeforeSubtitled() {
+        assertEquals(0, detect("Anime 12 VF").dubRank())
+        assertEquals(0, detect("Anime 12 DUB").dubRank())
+        assertEquals(1, detect("Anime 12 1080p").dubRank())
+        assertEquals(2, detect("Anime 12 VOSTFR").dubRank())
+        assertTrue(detect("SUB · Server 1").isSubtitledOnly)
+        assertFalse(detect("VF + VOSTFR").isSubtitledOnly)
+    }
+
+    @Test
+    fun dubbedFirstIsTheDefaultIncludingOldSavedAny() {
+        assertEquals(StreamDubMode.PreferDubbed, StreamLanguagePreferences().dubMode)
+        assertEquals(StreamDubMode.PreferDubbed, StreamLanguagePreferences.decode("dub=0").dubMode)
+        assertEquals(StreamDubMode.PreferDubbed, StreamLanguagePreferences.decode(null).dubMode)
+        val any = StreamLanguagePreferences(dubMode = StreamDubMode.Any)
+        assertEquals(any, StreamLanguagePreferences.decode(any.encode()))
+    }
+
+    @Test
+    fun bestDubRankUsesTheMostDubbedLink() {
+        fun link(name: String) = StreamItem(name = name, addonName = "Test", addonId = "test")
+        assertEquals(0, listOf(link("Episode 3 VOSTFR"), link("Episode 3 VF")).bestDubRank(emptyMap()))
+        assertEquals(2, listOf(link("Episode 3 VOSTFR")).bestDubRank(emptyMap()))
+        assertEquals(1, emptyList<StreamItem>().bestDubRank(emptyMap()))
+    }
+
+    @Test
+    fun languageOfTheSiteNameIsNotTheAudio() {
+        val info = StreamLanguageDetector.detect(listOf("French Stream", "Vidzy 720p"), sourceName = "French Stream")
+        assertTrue(info.audio.isEmpty())
+        val vostfr = StreamLanguageDetector.detect(listOf("French Stream VOSTFR"), sourceName = "French Stream")
+        assertEquals("VOSTFR", vostfr.label)
+        assertTrue(vostfr.isSubtitledOnly)
+        // An explicit VF stays a VF, even in a site name.
+        assertEquals(setOf("fr"), StreamLanguageDetector.detect(listOf("Anime VF"), sourceName = "Anime VF").audio)
+    }
+
+    @Test
+    fun languageFollowedBySubtitlesIsTheSubtitleLanguage() {
+        val french = detect("Movie 1080p French subs")
+        assertEquals(setOf("fr"), french.subtitles)
+        assertTrue(french.audio.isEmpty())
+        assertEquals(setOf("ar"), detect("Arabic Subtitles").subtitles)
+        assertTrue(detect("Film VOSTFR sous-titres").isSubtitledOnly)
+        assertEquals(setOf("fr"), detect("VF SUB").audio)
+    }
+
+    @Test
+    fun originalVersionIsNotDubbed() {
+        val info = detect("Episode 4 VO")
+        assertEquals("VO", info.label)
+        assertTrue(info.isSubtitledOnly)
+        assertEquals(2, info.dubRank())
+    }
+
+    @Test
+    fun siteLanguageKeepsItsLinksInOtherLanguages() {
+        val arabic = StreamLanguagePreferences(linkLanguages = setOf("ar"))
+        assertTrue(detect("English 1080p", providerLanguage = "ar").matches(arabic))
+        assertFalse(detect("English 1080p", providerLanguage = "fr").matches(arabic))
+        assertFalse(detect("English 1080p", providerLanguage = "ar").matches(arabic.copy(includeSubtitled = false)))
+    }
+
+    @Test
+    fun otherLanguageOnASiteOfTheProfileCountsAsSubtitled() {
+        val arabic = StreamLanguagePreferences(linkLanguages = setOf("ar"), dubMode = StreamDubMode.DubbedOnly)
+        val info = detect("English 1080p", providerLanguage = "ar").forPreferences(arabic)
+        assertTrue(info.isSubtitledOnly)
+        assertEquals(2, info.dubRank())
+        // Arabic audio stays dubbed.
+        assertEquals(0, detect("مدبلج", providerLanguage = "ar").forPreferences(arabic).dubRank())
+    }
+}

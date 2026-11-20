@@ -1,0 +1,25 @@
+<resources>
+    <string name="player_episode_same_source">Play on %1$s</string>
+    <string name="player_episode_same_source_missing">Not found on %1$s, searching every source</string>
+    <string name="streams_show_fewer_links">Show fewer links</string>
+    <plurals name="streams_show_more_links">
+        <item quantity="one">Show %1$d more link</item>
+        <item quantity="other">Show %1$d more links</item>
+    </plurals>
+    <string name="settings_backup_choose_title">What to export</string>
+    <string name="settings_backup_part_appearance">Appearance and home</string>
+    <string name="settings_backup_part_player">Player and subtitles</string>
+    <string name="settings_backup_part_links">Links, favorites and debrid</string>
+    <string name="settings_backup_part_accounts">Accounts and services (TMDB, Live TV...)</string>
+    <string name="settings_backup_part_addons">Stremio addons and plugins</string>
+    <string name="settings_backup_part_extensions">CloudStream extensions</string>
+    <string name="settings_backup_part_collections">Collections</string>
+    <string name="settings_backup_part_general">General</string>
+    <string name="settings_interface_style">Theme</string>
+    <string name="settings_interface_style_glass">Liquid glass</string>
+    <string name="settings_interface_style_glass_hint">Glass panels and blur effects</string>
+    <string name="settings_interface_style_amoled">AMOLED black</string>
+    <string name="settings_interface_style_amoled_hint">Plain black, no glass or blur: lighter for less powerful phones</string>
+    <string name="settings_interface_style_glass_unsupported">Not supported by this phone</string>
+    <string name="details_choose_source">Choose the source</string>
+</resources>
