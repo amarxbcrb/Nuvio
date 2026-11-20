@@ -377,6 +377,12 @@ object LibraryRepository {
         }
     }
 
+    /** Removes every saved item of the active profile, locally and on the synced account. */
+    fun removeAll() {
+        ensureLoaded()
+        uiState.value.items.map { it.id }.distinct().forEach(::remove)
+    }
+
     private fun remove(id: String, type: String) {
         ensureLoaded()
         val result = localState.remove(id, type)

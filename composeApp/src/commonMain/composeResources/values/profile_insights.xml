@@ -74,4 +74,12 @@
     <string name="profile_insights_taste_chip_collector">Collector</string>
     <string name="profile_insights_taste_chip_radar">Release radar</string>
     <string name="profile_insights_taste_chip_completionist">Completionist</string>
+    <string name="profile_clear_history_button">Clear history</string>
+    <string name="profile_clear_history_title">Clear history</string>
+    <string name="profile_clear_history_message">This also deletes it from your synced account. It cannot be undone.</string>
+    <string name="profile_clear_history_watching">Watching (in progress)</string>
+    <string name="profile_clear_history_watched">Watched</string>
+    <string name="profile_clear_history_saved">Saved (library)</string>
+    <string name="profile_clear_history_confirm">Clear</string>
+    <string name="profile_clear_history_cancel">Cancel</string>
 </resources>

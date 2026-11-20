@@ -404,6 +404,7 @@ private fun ProfileInsightsBody(
             ) {
                 ProfileTasteCard(stats = stats, factsProgress = factsProgress)
             }
+            ProfileClearHistoryButton()
         }
     }
 
@@ -3439,3 +3440,88 @@ private val profileHourTokenRegex = Regex("""(?i)(\d+)\s*h(?:ours?)?""")
 private val profileMinuteTokenRegex = Regex("""(?i)(\d+)\s*m(?:in(?:ute)?s?)?""")
 private val profileHourMinuteColonRegex = Regex("""^\s*(\d+)\s*:\s*(\d{1,2})\s*$""")
 private val profileDigitsOnlyRegex = Regex("""^\s*(\d+)\s*$""")
+
+@Composable
+private fun ProfileClearHistoryButton() {
+    var showDialog by remember { mutableStateOf(false) }
+    OutlinedButton(
+        onClick = { showDialog = true },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Text(stringResource(Res.string.profile_clear_history_button))
+    }
+    if (showDialog) {
+        ProfileClearHistoryDialog(onDismiss = { showDialog = false })
+    }
+}
+
+@Composable
+private fun ProfileClearHistoryDialog(onDismiss: () -> Unit) {
+    var clearWatching by remember { mutableStateOf(true) }
+    var clearWatched by remember { mutableStateOf(true) }
+    var clearSaved by remember { mutableStateOf(false) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.profile_clear_history_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(Res.string.profile_clear_history_message))
+                ProfileClearHistoryOption(
+                    label = stringResource(Res.string.profile_clear_history_watching),
+                    checked = clearWatching,
+                    onCheckedChange = { clearWatching = it },
+                )
+                ProfileClearHistoryOption(
+                    label = stringResource(Res.string.profile_clear_history_watched),
+                    checked = clearWatched,
+                    onCheckedChange = { clearWatched = it },
+                )
+                ProfileClearHistoryOption(
+                    label = stringResource(Res.string.profile_clear_history_saved),
+                    checked = clearSaved,
+                    onCheckedChange = { clearSaved = it },
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(
+                enabled = clearWatching || clearWatched || clearSaved,
+                onClick = {
+                    if (clearWatching) WatchProgressRepository.clearAllProgress()
+                    if (clearWatched) WatchedRepository.unmarkAllWatched()
+                    if (clearSaved) LibraryRepository.removeAll()
+                    onDismiss()
+                },
+            ) {
+                Text(
+                    text = stringResource(Res.string.profile_clear_history_confirm),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.profile_clear_history_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun ProfileClearHistoryOption(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(label)
+    }
+}
