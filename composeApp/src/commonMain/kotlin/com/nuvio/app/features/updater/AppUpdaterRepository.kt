@@ -34,8 +34,8 @@ internal data class GitHubAssetDto(
 internal class NoChannelReleaseException : IllegalStateException()
 
 internal const val GITHUB_API_BASE = "https://api.github.com"
-internal const val GITHUB_OWNER = "amarbcrb"
-internal const val GITHUB_REPO = "Nuvio-enhanced-"
+internal const val GITHUB_OWNER = "amarxbcrb"
+internal const val GITHUB_REPO = "Nuvio"
 
 /** APK names published by CI for each edition (see licence/LISEZMOI.md). */
 internal const val PLUS_APK_PREFIX = "NuvioPlus"

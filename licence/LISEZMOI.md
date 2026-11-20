@@ -44,8 +44,8 @@ Tant que la clé publique n'est pas collée, GitHub construit seulement Nuvio Pl
 
 Liens qui pointent toujours vers la dernière version :
 
-- https://github.com/amarbcrb/Nuvio-enhanced-/releases/latest/download/NuvioPlus.apk
-- https://github.com/amarbcrb/Nuvio-enhanced-/releases/latest/download/NuvioPro.apk
+- https://github.com/amarxbcrb/Nuvio/releases/latest/download/NuvioPlus.apk
+- https://github.com/amarxbcrb/Nuvio/releases/latest/download/NuvioPro.apk
 
 Dans l'appli, la mise à jour propose la dernière release : Nuvio Plus télécharge `NuvioPlus.apk`, Nuvio Pro télécharge `NuvioPro.apk`.
 
