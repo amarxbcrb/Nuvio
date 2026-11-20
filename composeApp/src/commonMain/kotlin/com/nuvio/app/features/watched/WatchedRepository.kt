@@ -841,6 +841,12 @@ object WatchedRepository {
         unmarkWatched(items = items, syncRemote = true)
     }
 
+    /** Removes every watched mark of the active profile, locally and on the synced account. */
+    fun unmarkAllWatched() {
+        ensureLoaded()
+        unmarkWatched(items = uiState.value.items, syncRemote = true)
+    }
+
     private fun unmarkWatched(items: Collection<WatchedItem>, syncRemote: Boolean) {
         ensureLoaded()
         if (items.isEmpty()) return

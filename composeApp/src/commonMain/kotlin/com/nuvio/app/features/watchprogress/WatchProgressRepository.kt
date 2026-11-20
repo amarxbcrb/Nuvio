@@ -1179,6 +1179,13 @@ object WatchProgressRepository {
         }
     }
 
+    /** Removes every in-progress entry of the active profile, locally and on the synced account. */
+    fun clearAllProgress() {
+        ensureLoaded()
+        val videoIds = currentEntries().map { it.videoId }.distinct()
+        clearProgress(videoIds = videoIds, parentMetaId = null)
+    }
+
     fun removeProgress(
         contentId: String,
         seasonNumber: Int? = null,

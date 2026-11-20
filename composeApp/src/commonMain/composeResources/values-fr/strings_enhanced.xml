@@ -22,4 +22,12 @@
     <string name="settings_interface_style_amoled_hint">Noir uni, sans verre ni flou : plus léger pour les téléphones moins puissants</string>
     <string name="settings_interface_style_glass_unsupported">Non pris en charge par ce téléphone</string>
     <string name="details_choose_source">Choisir la source</string>
+    <string name="profile_clear_history_button">Effacer l’historique</string>
+    <string name="profile_clear_history_title">Effacer l’historique</string>
+    <string name="profile_clear_history_message">Les données seront aussi supprimées de ton compte synchronisé. Impossible d’annuler.</string>
+    <string name="profile_clear_history_watching">En cours</string>
+    <string name="profile_clear_history_watched">Vus</string>
+    <string name="profile_clear_history_saved">Enregistrés (bibliothèque)</string>
+    <string name="profile_clear_history_confirm">Effacer</string>
+    <string name="profile_clear_history_cancel">Annuler</string>
 </resources>
