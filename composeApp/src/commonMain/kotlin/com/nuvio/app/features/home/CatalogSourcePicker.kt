@@ -55,7 +55,7 @@ import nuvio.composeapp.generated.resources.settings_catalog_source_title
 import nuvio.composeapp.generated.resources.source_picker_no_match
 import nuvio.composeapp.generated.resources.source_picker_search_hint
 import nuvio.composeapp.generated.resources.source_picker_sort_az
-import nuvio.composeapp.generated.resources.source_picker_sort_default
+import nuvio.composeapp.generated.resources.source_picker_sort_enabled
 import nuvio.composeapp.generated.resources.source_picker_sort_recent
 import org.jetbrains.compose.resources.stringResource
 
@@ -85,7 +85,7 @@ fun CatalogSourcePicker(
 }
 
 /** How the sources are listed in the picker. */
-internal enum class SourcePickerSort { Default, Alphabetical, RecentlyAdded }
+internal enum class SourcePickerSort { Default, Alphabetical, RecentlyAdded, Enabled }
 
 /**
  * A field showing the chosen sources; a tap opens a liquid glass sheet listing every source, with a
@@ -173,9 +173,9 @@ private fun SourcePickerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var query by rememberSaveable { mutableStateOf("") }
-    var sort by rememberSaveable { mutableStateOf(SourcePickerSort.Default) }
+    var sort by rememberSaveable { mutableStateOf(SourcePickerSort.Alphabetical) }
     val close: () -> Unit = { scope.launch { dismissNuvioBottomSheet(sheetState = sheetState, onDismiss = onDismiss) } }
-    val listed = remember(sources, query, sort) { sources.filteredAndSortedForPicker(query, sort) }
+    val listed = remember(sources, query, sort, selectedIds) { sources.filteredAndSortedForPicker(query, sort, selectedIds) }
 
     NuvioModalBottomSheet(onDismissRequest = close, sheetState = sheetState) {
         Column(
@@ -219,11 +219,7 @@ private fun SourcePickerSheet(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                GlassChip(
-                    label = stringResource(Res.string.source_picker_sort_default),
-                    selected = sort == SourcePickerSort.Default,
-                    onClick = { sort = SourcePickerSort.Default },
-                )
+                // A à Z · Derniers ajoutés · Addons activés (only the sources ticked for the Home).
                 GlassChip(
                     label = stringResource(Res.string.source_picker_sort_az),
                     selected = sort == SourcePickerSort.Alphabetical,
@@ -233,6 +229,11 @@ private fun SourcePickerSheet(
                     label = stringResource(Res.string.source_picker_sort_recent),
                     selected = sort == SourcePickerSort.RecentlyAdded,
                     onClick = { sort = SourcePickerSort.RecentlyAdded },
+                )
+                GlassChip(
+                    label = stringResource(Res.string.source_picker_sort_enabled),
+                    selected = sort == SourcePickerSort.Enabled,
+                    onClick = { sort = SourcePickerSort.Enabled },
                 )
             }
             LazyColumn(
@@ -276,11 +277,14 @@ private fun SourcePickerSheet(
 internal fun List<CatalogSourceOption>.filteredAndSortedForPicker(
     query: String,
     sort: SourcePickerSort,
+    selectedIds: Set<String> = emptySet(),
 ): List<CatalogSourceOption> {
     val needle = query.trim()
     val filtered = if (needle.isEmpty()) this else filter { it.name.contains(needle, ignoreCase = true) }
     return when (sort) {
         SourcePickerSort.Default -> filtered
+        // No source ticked means every source is used for the Home: then all are « activated ».
+        SourcePickerSort.Enabled -> if (selectedIds.isEmpty()) filtered else filtered.filter { it.id in selectedIds }
         SourcePickerSort.Alphabetical -> filtered.sortedBy { it.name.lowercase() }
         SourcePickerSort.RecentlyAdded -> filtered.withIndex()
             .sortedWith(

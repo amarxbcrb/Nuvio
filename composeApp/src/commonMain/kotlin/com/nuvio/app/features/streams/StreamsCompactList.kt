@@ -516,7 +516,7 @@ private fun SectionHeader(title: String, action: String? = null, onAction: (() -
 internal fun Modifier.linksSurface(shape: Shape, accent: Color? = null): Modifier =
     if (isAmbientLiquidGlassActive()) {
         val base = Color(0xFF0E0E12).copy(alpha = 0.66f)
-        val tint = accent?.copy(alpha = 0.32f)?.compositeOver(base) ?: base
+        val tint = accent?.copy(alpha = 0.45f)?.compositeOver(base) ?: base
         clip(shape)
             .ambientLiquidGlass(
                 shape = shape,
@@ -537,7 +537,7 @@ internal fun Modifier.linksSurface(shape: Shape, accent: Color? = null): Modifie
             )
     } else {
         clip(shape)
-            .background(accent?.copy(alpha = 0.20f)?.compositeOver(Color.Black) ?: Color.Black)
+            .background(accent?.copy(alpha = 0.32f)?.compositeOver(Color.Black) ?: Color.Black)
             .border(1.dp, accent?.copy(alpha = 0.55f) ?: Color.White.copy(alpha = 0.12f), shape)
     }
 
@@ -728,8 +728,15 @@ private fun LinkRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    resolution?.let {
-                        LinkBadge(it, if (it == "480p") LinkBadgeTone.Neutral else LinkBadgeTone.Quality)
+                    // Fusion badge images (imported badge packs) replace the text quality badge, so the
+                    // quality is not shown twice; without them the text badge stays.
+                    val badgeImages = stream.badges.filter { it.imageURL.isNotBlank() }
+                    if (badgeImages.isNotEmpty()) {
+                        badgeImages.forEach { StreamBadgeImage(badge = it) }
+                    } else {
+                        resolution?.let {
+                            LinkBadge(it, if (it == "480p") LinkBadgeTone.Neutral else LinkBadgeTone.Quality)
+                        }
                     }
                     LinkBadge(
                         listOfNotNull(info.versionFlag(), versionShort(info.versionKey())).joinToString(" "),
@@ -966,16 +973,9 @@ private fun FilterPill(
         modifier = modifier
             .height(52.dp)
             .nuvioPressScale(pressedScale = 0.96f)
-            .then(
-                if (highlighted) {
-                    Modifier
-                        .clip(shape)
-                        .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.10f).compositeOver(tokens.colors.accent), tokens.colors.accent)))
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), shape)
-                } else {
-                    Modifier.linksSurface(shape)
-                },
-            )
+            // Liquid glass tinted by the accent (not a flat fill), so the text stays white and
+            // readable whatever the accent, even white.
+            .linksSurface(shape, accent = if (highlighted) tokens.colors.accent else null)
             .clickable(onClick = onClick)
             .semantics { contentDescription = "$label : $value" }
             .padding(horizontal = 12.dp),

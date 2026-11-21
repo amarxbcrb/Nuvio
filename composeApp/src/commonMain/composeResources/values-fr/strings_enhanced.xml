@@ -56,4 +56,7 @@
     <string name="cloudstream_add_repository_added">Dépôt %1$s ajouté.</string>
     <string name="cloudstream_add_repository_title">AJOUTER UN DÉPÔT</string>
     <string name="cloudstream_add_repository_paste">Coller</string>
+    <string name="settings_root_section_watching">LECTURE ET CONTENU</string>
+    <string name="settings_root_section_personalization">PERSONNALISATION</string>
+    <string name="settings_root_section_services">SERVICES ET DONNÉES</string>
 </resources>

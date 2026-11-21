@@ -5,4 +5,5 @@
     <string name="source_picker_sort_recent">Derniers ajoutés</string>
     <string name="source_picker_no_match">Aucune source ne correspond à « %1$s »</string>
     <string name="search_sources_title">Sources de la recherche</string>
+    <string name="source_picker_sort_enabled">Addons activés</string>
 </resources>

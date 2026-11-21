@@ -4,7 +4,12 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
+import com.nuvio.app.core.ui.DialogButton
+import com.nuvio.app.core.ui.DialogButtonStyle
+import com.nuvio.app.core.ui.DialogButtons
+import com.nuvio.app.core.ui.DialogSurface
+import com.nuvio.app.core.ui.NuvioInputField
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -108,7 +113,7 @@ private fun ProLicenceGate(manager: LicenceManager, content: @Composable () -> U
     if (status is LicenceStatus.Valid) {
         content()
         if (showKeyEntry) {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            run {
                 KeyEntryDialog(
                     deviceCode = manager.deviceCode,
                     onDismiss = { showKeyEntry = false },
@@ -157,34 +162,30 @@ private fun KeyEntryDialog(
 ) {
     var input by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(
+    // Même fenêtre que le reste de l'appli (couleurs et forme du thème choisi).
+    DialogSurface(
         onDismissRequest = onDismiss,
-        title = { Text("Nouvelle clé d'accès") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = input,
-                    onValueChange = { input = it; error = null },
-                    label = { Text("Clé d'accès") },
-                    isError = error != null,
-                    supportingText = if (error != null) { { Text(error.orEmpty()) } } else null,
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    "Code du téléphone : $deviceCode",
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { error = onActivate(input) }, enabled = input.isNotBlank()) { Text("Activer") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
-        },
-    )
+        title = "Nouvelle clé d'accès",
+        message = "Collez la clé reçue du vendeur. Code de cet appareil : $deviceCode",
+    ) {
+        NuvioInputField(
+            value = input,
+            onValueChange = { input = it; error = null },
+            placeholder = "Collez votre clé ici",
+        )
+        error?.let {
+            Text(it, color = Color(0xFFFF6B6B), style = MaterialTheme.typography.bodyMedium)
+        }
+        DialogButtons {
+            DialogButton(text = "Annuler", onClick = onDismiss)
+            DialogButton(
+                text = "Activer",
+                onClick = { error = onActivate(input) },
+                style = DialogButtonStyle.Primary,
+                enabled = input.isNotBlank(),
+            )
+        }
+    }
 }
 
 /** Message sous le champ, seulement quand quelque chose ne va pas. */

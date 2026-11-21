@@ -2,6 +2,16 @@ package com.nuvio.app.features.plugins
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import com.nuvio.app.core.ui.nuvioPressScale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.drawBehind
@@ -709,13 +719,25 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup, isFir
                 ) { confirmRemove = true }
                 Spacer(Modifier.width(4.dp))
             }
+            val rotation by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = spring(dampingRatio = 0.75f, stiffness = 380f),
+                label = "repository_chevron",
+            )
             Icon(
-                if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
                 tint = tokens.colors.textMuted,
+                modifier = Modifier.graphicsLayer { rotationZ = rotation },
             )
         }
-        if (repository != null && expanded) {
+        AnimatedVisibility(
+            visible = repository != null && expanded,
+            enter = expandVertically(tween(260)) + fadeIn(tween(200)),
+            exit = shrinkVertically(tween(220)) + fadeOut(tween(140)),
+        ) {
+          Column {
+          if (repository != null) {
             val repositoryUrl = repository.manifest.sourceUrl
             Spacer(Modifier.height(16.dp))
             Row(
@@ -766,6 +788,8 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup, isFir
                 Spacer(Modifier.height(8.dp))
                 Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.colors.textMuted)
             }
+          }
+          }
         }
     }
     if (confirmRemove && repository != null) {
@@ -804,16 +828,17 @@ private fun CloudStreamActionTile(
 ) {
     Column(
         modifier = modifier
+            .nuvioPressScale(pressedScale = 0.94f, enabled = enabled)
             .nuvioGlassControl(RoundedCornerShape(18.dp))
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 14.dp, horizontal = 4.dp),
+            .padding(vertical = 12.dp, horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Icon(icon, contentDescription = null, tint = tint.copy(alpha = if (enabled) 1f else 0.4f), modifier = Modifier.size(22.dp))
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = tint.copy(alpha = if (enabled) 1f else 0.4f),
             maxLines = 1,
@@ -1142,13 +1167,11 @@ private fun CloudStreamPluginCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // Name and language only (« 🇫🇷 Français »).
                 Text(
-                    listOfNotNull(
-                        plugin.metadata.language?.let { code ->
-                            listOfNotNull(languageFlag(code), code.uppercase()).joinToString(" ")
-                        } ?: copy.unknownLanguage,
-                    ).plus(plugin.metadata.rawTvTypes.mapNotNull(copy::tvTypeLabel).distinct().take(2))
-                        .joinToString(" · "),
+                    plugin.metadata.language?.let { code ->
+                        listOfNotNull(languageFlag(code), streamLanguageDisplayName(code)).joinToString(" ")
+                    } ?: copy.unknownLanguage,
                     style = MaterialTheme.typography.bodyMedium,
                     color = tokens.colors.textMuted,
                     maxLines = 1,
@@ -1186,11 +1209,14 @@ private fun CloudStreamPluginCard(
                     }
                 }
             }
-            CloudStreamRowIcon(
-                icon = Icons.Rounded.PushPin,
-                contentDescription = if (isPinnedSource) copy.unpinSource else copy.pinSource,
-                tint = if (isPinnedSource) tokens.colors.accent else tokens.colors.textMuted,
-            ) { PinnedStreamSourcesRepository.setPinned(sourceId, !isPinnedSource) }
+            // The pin only shows on favourite extensions, to remove them from the favourites.
+            if (isPinnedSource) {
+                CloudStreamRowIcon(
+                    icon = Icons.Rounded.PushPin,
+                    contentDescription = copy.unpinSource,
+                    tint = tokens.colors.accent,
+                ) { PinnedStreamSourcesRepository.setPinned(sourceId, false) }
+            }
             if (!plugin.isInstalled || plugin.hasUpdate) {
                 CloudStreamRowIcon(
                     icon = if (plugin.hasUpdate) Icons.Rounded.Refresh else Icons.Rounded.Download,
@@ -1243,14 +1269,19 @@ private fun CloudStreamRowIcon(
     tint: Color,
     onClick: () -> Unit,
 ) {
+    // iOS-style round chip: soft fill, thin light edge, press feedback.
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .padding(horizontal = 3.dp)
+            .size(38.dp)
+            .nuvioPressScale(pressedScale = 0.88f)
             .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.07f))
+            .border(0.5.dp, Color.White.copy(alpha = 0.10f), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(22.dp))
+        Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(19.dp))
     }
 }
 

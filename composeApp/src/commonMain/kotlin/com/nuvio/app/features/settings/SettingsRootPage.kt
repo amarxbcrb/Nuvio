@@ -56,6 +56,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.rounded.Verified
 import com.nuvio.app.core.licence.SubscriptionInfo
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.settings_root_section_services
+import nuvio.composeapp.generated.resources.settings_root_section_personalization
+import nuvio.composeapp.generated.resources.settings_root_section_watching
 import nuvio.composeapp.generated.resources.compose_about_made_with
 import nuvio.composeapp.generated.resources.compose_about_version_format
 import nuvio.composeapp.generated.resources.compose_settings_page_account
@@ -151,11 +154,31 @@ internal fun LazyListScope.settingsRootContent(
         }
     }
     if (showGeneralSection) {
+        // Lecture et contenu : ce qu'on regarde et d'où ça vient.
         item {
-            SettingsSection(
-                title = stringResource(Res.string.compose_settings_root_general_section),
-                isTablet = isTablet,
-            ) {
+            SettingsSection(title = stringResource(Res.string.settings_root_section_watching), isTablet = isTablet) {
+                SettingsGroup(isTablet = isTablet) {
+                    SettingsNavigationRow(
+                        title = stringResource(Res.string.compose_settings_page_playback),
+                        description = stringResource(Res.string.settings_playback_subtitle),
+                        icon = Icons.Rounded.PlayArrow,
+                        isTablet = isTablet,
+                        onClick = onPlaybackClick,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
+                        title = stringResource(Res.string.compose_settings_page_content_discovery),
+                        description = stringResource(Res.string.compose_settings_root_content_discovery_description),
+                        icon = Icons.Rounded.Extension,
+                        isTablet = isTablet,
+                        onClick = onContentDiscoveryClick,
+                    )
+                }
+            }
+        }
+        // Personnalisation : apparence et notifications.
+        item {
+            SettingsSection(title = stringResource(Res.string.settings_root_section_personalization), isTablet = isTablet) {
                 SettingsGroup(isTablet = isTablet) {
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_appearance),
@@ -166,35 +189,25 @@ internal fun LazyListScope.settingsRootContent(
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
-                        title = stringResource(Res.string.compose_settings_page_content_discovery),
-                        description = stringResource(Res.string.compose_settings_root_content_discovery_description),
-                        icon = Icons.Rounded.Extension,
+                        title = stringResource(Res.string.compose_settings_page_notifications),
+                        description = stringResource(Res.string.compose_settings_root_notifications_description),
+                        icon = Icons.Rounded.Notifications,
                         isTablet = isTablet,
-                        onClick = onContentDiscoveryClick,
+                        onClick = onNotificationsClick,
                     )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = stringResource(Res.string.compose_settings_page_playback),
-                        description = stringResource(Res.string.settings_playback_subtitle),
-                        icon = Icons.Rounded.PlayArrow,
-                        isTablet = isTablet,
-                        onClick = onPlaybackClick,
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
+                }
+            }
+        }
+        // Services et données : comptes connectés et sauvegarde.
+        item {
+            SettingsSection(title = stringResource(Res.string.settings_root_section_services), isTablet = isTablet) {
+                SettingsGroup(isTablet = isTablet) {
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_integrations),
                         description = stringResource(Res.string.compose_settings_root_integrations_description),
                         icon = Icons.Rounded.Link,
                         isTablet = isTablet,
                         onClick = onIntegrationsClick,
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = stringResource(Res.string.compose_settings_page_notifications),
-                        description = stringResource(Res.string.compose_settings_root_notifications_description),
-                        icon = Icons.Rounded.Notifications,
-                        isTablet = isTablet,
-                        onClick = onNotificationsClick,
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
@@ -350,9 +363,6 @@ private fun SubscriptionRow(info: SubscriptionInfo, isTablet: Boolean) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = tokens.colors.textMuted,
             )
-            info.clientName?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.colors.textMuted)
-            }
         }
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,

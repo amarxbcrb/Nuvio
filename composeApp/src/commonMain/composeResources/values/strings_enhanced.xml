@@ -48,4 +48,7 @@
     <string name="cloudstream_add_repository_added">Repository %1$s added.</string>
     <string name="cloudstream_add_repository_title">ADD A REPOSITORY</string>
     <string name="cloudstream_add_repository_paste">Paste</string>
+    <string name="settings_root_section_watching">WATCHING AND CONTENT</string>
+    <string name="settings_root_section_personalization">PERSONALIZATION</string>
+    <string name="settings_root_section_services">SERVICES AND DATA</string>
 </resources>

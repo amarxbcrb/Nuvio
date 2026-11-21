@@ -1192,7 +1192,7 @@
     <string name="party_error_ended">Cette soirée est terminée.</string>
     <string name="party_error_rate_limited">Trop de tentatives. Réessayez dans quelques minutes.</string>
     <string name="party_error_network">Impossible de joindre la soirée. Vérifiez votre connexion.</string>
-    <string name="party_settings_description">Rejoignez vos amis avec un code</string>
+    <string name="party_settings_description">Rejoindre des amis avec un code</string>
     <string name="party_source">Source de la soirée</string>
     <string name="party_episode_format">S%1$d E%2$d</string>
     <string name="party_host_only_title">Moi seul contrôle la lecture</string>
