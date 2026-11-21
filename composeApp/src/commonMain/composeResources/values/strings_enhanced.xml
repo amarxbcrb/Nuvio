@@ -51,4 +51,6 @@
     <string name="settings_root_section_watching">WATCHING AND CONTENT</string>
     <string name="settings_root_section_personalization">PERSONALIZATION</string>
     <string name="settings_root_section_services">SERVICES AND DATA</string>
+    <string name="settings_playback_section_controls">CONTROLS AND GESTURES</string>
+    <string name="settings_playback_section_during">DURING PLAYBACK</string>
 </resources>

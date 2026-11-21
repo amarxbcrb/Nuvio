@@ -59,4 +59,6 @@
     <string name="settings_root_section_watching">LECTURE ET CONTENU</string>
     <string name="settings_root_section_personalization">PERSONNALISATION</string>
     <string name="settings_root_section_services">SERVICES ET DONNÉES</string>
+    <string name="settings_playback_section_controls">COMMANDES ET GESTES</string>
+    <string name="settings_playback_section_during">PENDANT LA LECTURE</string>
 </resources>
