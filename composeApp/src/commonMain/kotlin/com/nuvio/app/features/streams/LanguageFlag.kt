@@ -3,7 +3,7 @@ package com.nuvio.app.features.streams
 /** Flag emoji for a language code (« fr » → 🇫🇷), null when the language has no obvious flag. */
 internal fun languageFlag(code: String): String? {
     val country = when (code.trim().lowercase().substringBefore('-')) {
-        "fr" -> "FR"; "en" -> "GB"; "ar" -> "SA"; "es" -> "ES"; "pt" -> "PT"; "it" -> "IT"
+        "fr" -> "FR"; "en" -> "GB"; "ar" -> "DZ"; "es" -> "ES"; "pt" -> "PT"; "it" -> "IT"
         "de" -> "DE"; "tr" -> "TR"; "ru" -> "RU"; "ja" -> "JP"; "ko" -> "KR"; "zh" -> "CN"
         "hi" -> "IN"; "id" -> "ID"; "vi" -> "VN"; "th" -> "TH"; "pl" -> "PL"; "nl" -> "NL"
         "uk" -> "UA"; "fa" -> "IR"; "he" -> "IL"; "ms" -> "MY"; "ro" -> "RO"; "el" -> "GR"
