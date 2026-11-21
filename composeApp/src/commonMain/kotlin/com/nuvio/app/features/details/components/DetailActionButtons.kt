@@ -65,6 +65,7 @@ import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
 import nuvio.composeapp.generated.resources.details_play_source

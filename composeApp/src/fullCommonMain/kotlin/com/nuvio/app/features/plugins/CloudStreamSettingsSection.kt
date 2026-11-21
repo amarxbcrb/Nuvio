@@ -1335,7 +1335,6 @@ private class CloudStreamSettingsCopy private constructor(
     val typeLabel: String = text(english = "Type", french = "Type", turkish = "Tür")
     val otherExtensions: String = text(english = "Other extensions", french = "Autres extensions", turkish = "Diğer eklentiler")
     val searchExtensionPlaceholder: String = text(english = "Search an extension", french = "Rechercher une extension", turkish = "Eklenti ara")
-    val repositoriesSectionTitle: String = text(english = "REPOSITORIES", french = "DÉPÔTS", turkish = "DEPOLAR")
     val tileInstall: String = text(english = "Install", french = "Installer", turkish = "Kur")
     val tileRefresh: String = text(english = "Refresh", french = "Actualiser", turkish = "Yenile")
     val tileCopy: String = text(english = "Copy", french = "Copier", turkish = "Kopyala")
