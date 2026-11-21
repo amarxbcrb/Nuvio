@@ -26,6 +26,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.nuvio.app.core.ui.NuvioCardColor
+import com.nuvio.app.core.ui.DialogButton
+import com.nuvio.app.core.ui.DialogButtonStyle
+import com.nuvio.app.core.ui.DialogButtons
+import com.nuvio.app.core.ui.DialogSurface
 import com.nuvio.app.core.ui.NuvioModalBottomSheet
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.nuvioGlassControl
@@ -632,6 +636,7 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
     val clipboardManager = LocalClipboardManager.current
     var isRestoring by remember(group.key) { mutableStateOf(false) }
     var repositoryMessage by remember(group.key) { mutableStateOf<String?>(null) }
+    var confirmRemove by remember(group.key) { mutableStateOf(false) }
     val tokens = MaterialTheme.nuvio
     val hasRows = expanded && group.plugins.isNotEmpty()
     val shape = if (hasRows) {
@@ -682,7 +687,7 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
                     icon = Icons.Rounded.DeleteOutline,
                     contentDescription = copy.removeRepositoryContentDescription,
                     tint = CloudStreamDangerColor,
-                ) { CloudStreamRepository.removeRepository(repository.manifest.sourceUrl) }
+                ) { confirmRemove = true }
                 Spacer(Modifier.width(4.dp))
             }
             Icon(
@@ -736,11 +741,31 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
                     label = copy.tileRemove,
                     tint = CloudStreamDangerColor,
                     modifier = Modifier.weight(1f),
-                ) { CloudStreamRepository.removeRepository(repositoryUrl) }
+                ) { confirmRemove = true }
             }
             repositoryMessage?.let {
                 Spacer(Modifier.height(8.dp))
                 Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.colors.textMuted)
+            }
+        }
+    }
+    if (confirmRemove && repository != null) {
+        val name = repository.manifest.name
+        DialogSurface(
+            onDismissRequest = { confirmRemove = false },
+            title = copy.removeRepositoryConfirmTitle(name),
+            message = copy.removeRepositoryConfirmMessage(group.allPlugins.count { it.isInstalled }),
+        ) {
+            DialogButtons {
+                DialogButton(text = copy.cancel, onClick = { confirmRemove = false })
+                DialogButton(
+                    text = copy.tileRemove,
+                    style = DialogButtonStyle.Destructive,
+                    onClick = {
+                        confirmRemove = false
+                        CloudStreamRepository.removeRepository(repository.manifest.sourceUrl)
+                    },
+                )
             }
         }
     }
@@ -1316,6 +1341,15 @@ private class CloudStreamSettingsCopy private constructor(
     val tileCopy: String = text(english = "Copy", french = "Copier", turkish = "Kopyala")
     val tileRemove: String = text(english = "Remove", french = "Retirer", turkish = "Kaldır")
     val healthAllWorkingTitle: String = text(english = "Every extension answers", french = "Toutes les extensions répondent", turkish = "Tüm eklentiler yanıt veriyor")
+    val cancel: String = text(english = "Cancel", french = "Annuler", turkish = "İptal")
+    fun removeRepositoryConfirmTitle(name: String): String = text(
+        english = "Remove $name?", french = "Retirer $name ?", turkish = "$name kaldırılsın mı?",
+    )
+    fun removeRepositoryConfirmMessage(installed: Int): String = text(
+        english = if (installed > 0) "Its $installed installed extensions are deleted too." else "The repository is removed from the list.",
+        french = if (installed > 0) "Ses $installed extensions installées seront aussi supprimées." else "Le dépôt sera retiré de la liste.",
+        turkish = if (installed > 0) "Kurulu $installed eklenti de silinir." else "Depo listeden kaldırılır.",
+    )
     val healthDisableAction: String = text(english = "Disable", french = "Désactiver", turkish = "Kapat")
 
     fun headerCounts(repositories: Int, extensions: Int, active: Int): String = text(
