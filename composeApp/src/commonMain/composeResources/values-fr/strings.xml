@@ -1360,8 +1360,8 @@
     <string name="settings_stream_dub_any">Indifférent</string>
     <string name="settings_stream_dub_prefer">Doublé d’abord</string>
     <string name="settings_stream_dub_only">Doublé uniquement</string>
-    <string name="settings_cloudstream_language_section">LANGUE DES EXTENSIONS</string>
-    <string name="settings_cloudstream_language_title">Langues des extensions</string>
+    <string name="settings_cloudstream_language_section">LANGUES DES SOURCES</string>
+    <string name="settings_cloudstream_language_title">Langues des sources</string>
     <string name="settings_cloudstream_language_description">N’utiliser que les extensions CloudStream de ces langues pour l’accueil, la recherche et les liens. Sans sélection, toutes les extensions sont utilisées.</string>
     <string name="streams_resume_from_percent">Reprendre depuis %1$d%</string>
     <string name="streams_resume_from_time">Reprendre depuis %1$s</string>

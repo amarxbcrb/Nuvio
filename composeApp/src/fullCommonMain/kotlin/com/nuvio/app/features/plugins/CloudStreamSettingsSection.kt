@@ -1569,165 +1569,169 @@ private class CloudStreamSettingsCopy private constructor(
     )
 
     val sectionTitle: String =
-        if (turkish) "CloudStream / CS3" else "CloudStream / CS3"
+        text(english = "CloudStream / CS3", french = "CloudStream / CS3", turkish = "CloudStream / CS3")
     val repositoriesSectionTitle: String =
-        if (turkish) "CS3 repositoryleri" else "CS3 repositories"
+        text(english = "CS3 repositories", french = "DÉPÔTS", turkish = "CS3 repositoryleri")
     val providersSectionTitle: String =
-        if (turkish) "CS3 providerları" else "CS3 providers"
+        text(english = "CS3 providers", french = "Fournisseurs CS3", turkish = "CS3 providerları")
     val securityWarningTitle: String =
-        if (turkish) "Üçüncü taraf kod güvenlik uyarısı" else "Third-party code security warning"
+        text(english = "Third-party code security warning", french = "Avertissement : code tiers", turkish = "Üçüncü taraf kod güvenlik uyarısı")
     val securityWarningBody: String =
-        if (turkish) {
-            "Repository ve eklentiler Nuvio tarafından yönetilmez. Yalnızca güvendiğiniz kaynakları ekleyin. Paket denetlenmeden provider etkinleştirilemez."
-        } else {
-            "Repositories and plugins are not managed by Nuvio. Only add sources you trust. A provider cannot be enabled until its package is checked."
-        }
+        text(
+            english = "Repositories and plugins are not managed by Nuvio. Only add sources you trust. A provider cannot be enabled until its package is checked.",
+            french = "Les dépôts et extensions ne sont pas gérés par Nuvio. N’ajoutez que des sources de confiance. Une extension ne peut être activée qu’après vérification de son paquet.",
+            turkish = "Repository ve eklentiler Nuvio tarafından yönetilmez. Yalnızca güvendiğiniz kaynakları ekleyin. Paket denetlenmeden provider etkinleştirilemez.",
+        )
     val acceptSecurityWarning: String =
-        if (turkish) "Uyarıyı okudum ve kabul ediyorum" else "I have read and accept the warning"
+        text(english = "I have read and accept the warning", french = "J’ai lu et j’accepte l’avertissement", turkish = "Uyarıyı okudum ve kabul ediyorum")
     val addRepositoryTitle: String =
-        if (turkish) "CloudStream repository ekle" else "Add CloudStream repository"
+        text(english = "Add CloudStream repository", french = "Ajouter un dépôt CloudStream", turkish = "CloudStream repository ekle")
     val editRepositoryTitle: String =
-        if (turkish) "Repository bağlantısını düzenle" else "Edit repository link"
+        text(english = "Edit repository link", french = "Modifier le lien du dépôt", turkish = "Repository bağlantısını düzenle")
     val repositoryLoading: String =
-        if (turkish) "Repository okunuyor…" else "Reading repository..."
+        text(english = "Reading repository...", french = "Lecture du dépôt…", turkish = "Repository okunuyor…")
     val applyRepositoryChange: String =
-        if (turkish) "Değişikliği uygula" else "Apply changes"
+        text(english = "Apply changes", french = "Appliquer", turkish = "Değişikliği uygula")
     val addRepository: String =
-        if (turkish) "Repository ekle" else "Add repository"
+        text(english = "Add repository", french = "Ajouter le dépôt", turkish = "Repository ekle")
     val repositoryRefreshing: String =
-        if (turkish) "Repository yenileniyor." else "Refreshing repository."
+        text(english = "Refreshing repository.", french = "Actualisation du dépôt.", turkish = "Repository yenileniyor.")
     val editRepositoryContentDescription: String =
-        if (turkish) "Repository düzenle" else "Edit repository"
+        text(english = "Edit repository", french = "Modifier le dépôt", turkish = "Repository düzenle")
     val refreshRepositoryContentDescription: String =
-        if (turkish) "Repository yenile" else "Refresh repository"
+        text(english = "Refresh repository", french = "Actualiser le dépôt", turkish = "Repository yenile")
     val removeRepositoryContentDescription: String =
-        if (turkish) "Repository kaldır" else "Remove repository"
+        text(english = "Remove repository", french = "Retirer le dépôt", turkish = "Repository kaldır")
     val searchAndFilterTitle: String =
-        if (turkish) "Eklenti ara ve filtrele" else "Search and filter plugins"
+        text(english = "Search and filter plugins", french = "Filtres", turkish = "Eklenti ara ve filtrele")
     val searchPlaceholder: String =
-        if (turkish) "Eklenti, açıklama veya yazar ara" else "Search plugin, description, or author"
+        text(english = "Search plugin, description, or author", french = "Rechercher une extension, une description ou un auteur", turkish = "Eklenti, açıklama veya yazar ara")
     val allLanguages: String =
-        if (turkish) "Tüm diller" else "All languages"
+        text(english = "All languages", french = "Toutes les langues", turkish = "Tüm diller")
     val allTypes: String =
-        if (turkish) "Tüm türler" else "All types"
+        text(english = "All types", french = "Tous les types", turkish = "Tüm türler")
 
     fun installFilterLabel(filter: CloudStreamInstallFilter): String = when (filter) {
-        CloudStreamInstallFilter.All -> if (turkish) "Tümü" else "All"
-        CloudStreamInstallFilter.Installed -> if (turkish) "Kurulu" else "Installed"
-        CloudStreamInstallFilter.NotInstalled -> if (turkish) "Kurulu değil" else "Not installed"
+        CloudStreamInstallFilter.All -> text(english = "All", french = "Toutes", turkish = "Tümü")
+        CloudStreamInstallFilter.Installed -> text(english = "Installed", french = "Installées", turkish = "Kurulu")
+        CloudStreamInstallFilter.NotInstalled -> text(english = "Not installed", french = "Non installées", turkish = "Kurulu değil")
     }
 
     fun pluginRemoved(name: String): String =
-        if (turkish) "$name kaldırıldı" else "$name removed"
+        text(english = "$name removed", french = "$name supprimée", turkish = "$name kaldırıldı")
     val bulkInstallFailed: String =
-        if (turkish) "Toplu kurulum tamamlanamadı." else "Bulk install could not be completed."
+        text(english = "Bulk install could not be completed.", french = "L’installation groupée n’a pas abouti.", turkish = "Toplu kurulum tamamlanamadı.")
     val bulkInstalling: String =
-        if (turkish) "Toplu kurulum yapılıyor…" else "Bulk install in progress..."
+        text(english = "Bulk install in progress...", french = "Installation groupée en cours…", turkish = "Toplu kurulum yapılıyor…")
     val allInstalledAndActive: String =
-        if (turkish) "Tümü kurulu ve aktif" else "Everything is installed and active"
+        text(english = "Everything is installed and active", french = "Tout est installé et actif", turkish = "Tümü kurulu ve aktif")
     val noPluginsToInstall: String =
-        if (turkish) "Kurulacak eklenti bulunamadı." else "No plugins to install."
+        text(english = "No plugins to install.", french = "Aucune extension à installer.", turkish = "Kurulacak eklenti bulunamadı.")
     val unknownAuthor: String =
-        if (turkish) "Yazar belirtilmemiş" else "Author not specified"
+        text(english = "Author not specified", french = "Auteur non précisé", turkish = "Yazar belirtilmemiş")
     val noDescription: String =
-        if (turkish) "Açıklama yok." else "No description."
+        text(english = "No description.", french = "Pas de description.", turkish = "Açıklama yok.")
     val sha256Verified: String =
-        if (turkish) "SHA-256 doğrulandı" else "SHA-256 verified"
+        text(english = "SHA-256 verified", french = "SHA-256 vérifié", turkish = "SHA-256 doğrulandı")
     val hashUnverified: String =
-        if (turkish) "Hash doğrulanmadı" else "Hash unverified"
+        text(english = "Hash unverified", french = "Empreinte non vérifiée", turkish = "Hash doğrulanmadı")
     val packageChecked: String =
-        if (turkish) "Paket denetlendi" else "Package checked"
+        text(english = "Package checked", french = "Paquet vérifié", turkish = "Paket denetlendi")
     val packageUnchecked: String =
-        if (turkish) "Paket denetlenmedi" else "Package unchecked"
+        text(english = "Package unchecked", french = "Paquet non vérifié", turkish = "Paket denetlenmedi")
     val androidAndIosCompatible: String =
-        if (turkish) "Android + iOS uyumlu" else "Android + iOS compatible"
+        text(english = "Android + iOS compatible", french = "Compatible Android + iOS", turkish = "Android + iOS uyumlu")
     val androidCompatible: String =
-        if (turkish) "Android uyumlu" else "Android compatible"
+        text(english = "Android compatible", french = "Compatible Android", turkish = "Android uyumlu")
     val runtimeIncompatible: String =
-        if (turkish) "Runtime uyumsuz" else "Runtime incompatible"
+        text(english = "Runtime incompatible", french = "Incompatible", turkish = "Runtime uyumsuz")
     val downloading: String =
-        if (turkish) "İndiriliyor…" else "Downloading..."
+        text(english = "Downloading...", french = "Téléchargement…", turkish = "İndiriliyor…")
     val update: String =
-        if (turkish) "Güncelle" else "Update"
+        text(english = "Update", french = "Mettre à jour", turkish = "Güncelle")
     val reinstall: String =
-        if (turkish) "Yeniden kur" else "Reinstall"
+        text(english = "Reinstall", french = "Réinstaller", turkish = "Yeniden kur")
     val install: String =
-        if (turkish) "Kur" else "Install"
+        text(english = "Install", french = "Installer", turkish = "Kur")
     val remove: String =
-        if (turkish) "Kaldır" else "Remove"
+        text(english = "Remove", french = "Supprimer", turkish = "Kaldır")
     val pinSource: String =
-        if (turkish) "Kaynağı sabitle" else "Pin source"
+        text(english = "Pin source", french = "Épingler la source", turkish = "Kaynağı sabitle")
     val unpinSource: String =
-        if (turkish) "Kaynak sabitlemesini kaldır" else "Unpin source"
+        text(english = "Unpin source", french = "Désépingler la source", turkish = "Kaynak sabitlemesini kaldır")
     val acceptSecurityWarningFailure: String =
-        if (turkish) "Üçüncü taraf eklenti güvenlik uyarısını kabul edin." else "Accept the third-party plugin security warning."
+        text(english = "Accept the third-party plugin security warning.", french = "Acceptez d’abord l’avertissement sur les extensions tierces.", turkish = "Üçüncü taraf eklenti güvenlik uyarısını kabul edin.")
     val pluginNotFoundFailure: String =
-        if (turkish) "Eklenti bulunamadı." else "Plugin was not found."
+        text(english = "Plugin was not found.", french = "Extension introuvable.", turkish = "Eklenti bulunamadı.")
     val pluginDownFailure: String =
-        if (turkish) "Bu eklenti şu anda kapalı görünüyor." else "This plugin appears to be down."
+        text(english = "This plugin appears to be down.", french = "Cette extension semble hors service.", turkish = "Bu eklenti şu anda kapalı görünüyor.")
     val packageEnableFailure: String =
-        if (turkish) {
-            "Paket kuruldu ama doğrulama/uyumluluk şartları nedeniyle aktif edilemedi."
-        } else {
-            "The package was installed, but could not be enabled because verification or compatibility checks failed."
-        }
+        text(
+            english = "The package was installed, but could not be enabled because verification or compatibility checks failed.",
+            french = "Le paquet est installé, mais n’a pas pu être activé : la vérification ou la compatibilité a échoué.",
+            turkish = "Paket kuruldu ama doğrulama/uyumluluk şartları nedeniyle aktif edilemedi.",
+        )
 
     fun repositoryCount(count: Int): String =
-        if (turkish) "$count repository" else "$count repositories"
+        text(english = "$count repositories", french = "$count dépôts", turkish = "$count repository")
 
     fun installedCount(count: Int): String =
-        if (turkish) "$count kurulu" else "$count installed"
+        text(english = "$count installed", french = "$count installées", turkish = "$count kurulu")
 
     fun enabledProviderCount(count: Int): String =
-        if (turkish) "$count etkin provider" else "$count enabled providers"
+        text(english = "$count enabled providers", french = "$count fournisseurs actifs", turkish = "$count etkin provider")
 
     fun repositoryAdded(name: String): String =
-        if (turkish) "$name eklendi." else "$name added."
+        text(english = "$name added.", french = "$name ajouté.", turkish = "$name eklendi.")
 
     fun installAndEnableAll(count: Int): String =
-        if (turkish) "Tümünü kur ve aktif et ($count)" else "Install and enable all ($count)"
+        text(english = "Install and enable all ($count)", french = "Tout installer et activer ($count)", turkish = "Tümünü kur ve aktif et ($count)")
 
     fun enabledPluginCount(count: Int): String =
-        if (turkish) "$count eklenti aktif edildi" else "$count plugins enabled"
+        text(english = "$count plugins enabled", french = "$count extensions activées", turkish = "$count eklenti aktif edildi")
 
     fun installedOrUpdatedCount(count: Int): String =
-        if (turkish) ", $count paket kuruldu/güncellendi" else ", $count packages installed/updated"
+        text(english = ", $count packages installed/updated", french = ", $count paquets installés ou mis à jour", turkish = ", $count paket kuruldu/güncellendi")
 
     fun pendingOperationCount(count: Int): String =
-        if (turkish) ", $count işlem zaten sürüyor" else ", $count operations already in progress"
+        text(english = ", $count operations already in progress", french = ", $count opérations déjà en cours", turkish = ", $count işlem zaten sürüyor")
 
     fun skippedFailureCount(count: Int, pluginName: String, message: String): String =
-        if (turkish) {
-            ". $count eklenti atlandı: $pluginName - $message"
-        } else {
-            ". $count plugins skipped: $pluginName - $message"
-        }
+        text(
+            english = ". $count plugins skipped: $pluginName - $message",
+            french = ". $count extensions ignorées : $pluginName - $message",
+            turkish = ". $count eklenti atlandı: $pluginName - $message",
+        )
 
     fun noPluginEnabled(pluginName: String, message: String): String =
-        if (turkish) {
-            "Hiçbir eklenti aktif edilemedi: $pluginName - $message"
-        } else {
-            "No plugins could be enabled: $pluginName - $message"
-        }
+        text(
+            english = "No plugins could be enabled: $pluginName - $message",
+            french = "Aucune extension n’a pu être activée : $pluginName - $message",
+            turkish = "Hiçbir eklenti aktif edilemedi: $pluginName - $message",
+        )
 
     fun onlyPendingOperations(count: Int): String =
-        if (turkish) "$count işlem zaten sürüyor." else "$count operations are already in progress."
+        text(english = "$count operations are already in progress.", french = "$count opérations sont déjà en cours.", turkish = "$count işlem zaten sürüyor.")
 
     fun currentVersion(version: Int): String =
-        if (turkish) "Güncel v$version" else "Current v$version"
+        text(english = "Current v$version", french = "Actuelle v$version", turkish = "Güncel v$version")
 
     fun installedVersion(version: Int): String =
-        if (turkish) "Kurulu v$version" else "Installed v$version"
+        text(english = "Installed v$version", french = "Installée v$version", turkish = "Kurulu v$version")
 
     fun pluginInstalled(name: String): String =
-        if (turkish) "$name paketi denetlendi ve kuruldu." else "$name package was checked and installed."
+        text(english = "$name package was checked and installed.", french = "$name vérifiée et installée.", turkish = "$name paketi denetlendi ve kuruldu.")
 
     companion object {
-        fun forLanguage(language: AppLanguage): CloudStreamSettingsCopy =
-            CloudStreamSettingsCopy(
-                turkish = language == AppLanguage.TURKISH,
-                french = language == AppLanguage.FRENCH,
-            )
+        fun forLanguage(language: AppLanguage): CloudStreamSettingsCopy {
+            // « Langue de l'appareil » follows the phone's language.
+            val code = if (language == AppLanguage.DEVICE) {
+                androidx.compose.ui.text.intl.Locale.current.language.lowercase()
+            } else {
+                language.code
+            }
+            return CloudStreamSettingsCopy(turkish = code == "tr", french = code == "fr")
+        }
     }
 }
 

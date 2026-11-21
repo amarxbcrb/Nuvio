@@ -49,19 +49,4 @@ internal actual fun LazyListScope.cloudStreamSettingsContent() {
     item(key = "cloudstream-health") {
         CloudStreamHealthButton()
     }
-    item(key = "cloudstream-languages") {
-        val cloudStreamState by remember {
-            CloudStreamRepository.initialize()
-            CloudStreamRepository.uiState
-        }.collectAsStateWithLifecycle()
-        val extensionLanguages = remember(cloudStreamState.plugins) {
-            cloudStreamState.plugins
-                .mapNotNull { it.metadata.language?.trim()?.lowercase()?.takeIf(String::isNotEmpty) }
-                .distinct()
-                .sorted()
-        }
-        Column(modifier = Modifier.padding(top = 20.dp)) {
-            CloudStreamExtensionLanguageSettings(isTablet = false, availableLanguages = extensionLanguages)
-        }
-    }
 }

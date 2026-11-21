@@ -117,6 +117,21 @@ internal fun LazyListScope.contentDiscoveryContent(
         }
     }
 
+    // « Langues des sources »: only CloudStream extensions of these languages are used for Home,
+    // search and links (addons declare no language, so they are not filtered).
+    if (showCloudStreamEntry) {
+        item {
+            val cloudStream by CloudStreamRepository.uiState.collectAsStateWithLifecycle()
+            val languages = remember(cloudStream.plugins) {
+                cloudStream.plugins
+                    .filter { it.isInstalled }
+                    .mapNotNull { it.metadata.language?.trim()?.lowercase()?.takeIf(String::isNotEmpty) }
+                    .distinct()
+            }
+            CloudStreamExtensionLanguageSettings(isTablet = isTablet, availableLanguages = languages)
+        }
+    }
+
     item {
         val recentSearchesEnabled by remember {
             SearchHistoryRepository.ensureLoaded()

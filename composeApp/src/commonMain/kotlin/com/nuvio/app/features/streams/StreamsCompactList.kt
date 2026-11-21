@@ -324,11 +324,13 @@ internal fun CompactStreamList(
                     value = activeProfile.displayName(),
                     highlighted = true,
                     onClick = onOpenProfiles,
-                    modifier = Modifier.weight(1f),
+                    // The profile name (« Français ») is the longest: it gets more room.
+                    modifier = Modifier.weight(1.4f),
                 )
                 MenuFilterPill(
                     label = stringResource(Res.string.links_quality),
-                    value = quality ?: all,
+                    // Without a filter the pill names what it filters (« Qualité »), not « Toutes ».
+                    value = quality ?: stringResource(Res.string.links_quality),
                     highlighted = quality != null,
                     options = listOf(null to all) + qualities.map { (key, count) -> key to "$key ($count)" },
                     selected = quality,
@@ -337,7 +339,7 @@ internal fun CompactStreamList(
                 )
                 MenuFilterPill(
                     label = stringResource(Res.string.links_source),
-                    value = sources.firstOrNull { it.first == source }?.second ?: all,
+                    value = sources.firstOrNull { it.first == source }?.second ?: stringResource(Res.string.links_source),
                     highlighted = source != null,
                     options = listOf(null to all) + sources.map { (id, name, count) -> id to "$name ($count)" },
                     selected = source,
@@ -519,8 +521,8 @@ internal fun Modifier.linksSurface(shape: Shape, accent: Color? = null): Modifie
                 shape = shape,
                 tint = tint,
                 fallback = Color(0xFF0E0E12).copy(alpha = 0.94f),
-                blurRadius = 24.dp,
-                refractionHeight = 10.dp,
+                blurRadius = 12.dp,
+                refractionHeight = 8.dp,
             )
             .border(
                 width = 1.dp,
@@ -970,20 +972,20 @@ private fun FilterPill(
             )
             .clickable(onClick = onClick)
             .semantics { contentDescription = "$label : $value" }
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(4.dp))
         Icon(Icons.Rounded.UnfoldMore, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(18.dp))
     }
 }

@@ -207,28 +207,33 @@ object ThemeSettingsRepository {
     /**
      * Appearance is two independent axes, all four combinations valid:
      *  - Style: liquid glass or opaque  -> [liquidGlassEffectsEnabled] ([setLiquidGlassEffectsEnabled]).
-     *  - Fond:  AMOLED black or dynamic -> [dynamicArtworkBackgroundEnabled] ([setBackgroundMode]).
-     * The background base is always pure black (#000): the dynamic mode tints it from the artwork.
-     * The old "Noir AMOLED" and "Liquid glass effects" switches are gone; their stored keys are
-     * still read and written so backups, sync and older builds keep working.
+     *  - Fond:  AMOLED black or dynamic -> [setBackgroundMode].
+     * AMOLED black: pure #000 background, no artwork tint. Dynamic: the theme background tinted by
+     * the artwork, as before the redesign. The old switches are gone; their stored keys are still
+     * read and written so backups, sync and older builds keep working.
      */
     fun setBackgroundMode(dynamic: Boolean) {
         setDynamicArtworkBackground(dynamic)
+        setAmoledInternal(!dynamic)
+    }
+
+    private fun setAmoledInternal(enabled: Boolean) {
+        if (_amoledEnabled.value == enabled) return
+        _amoledEnabled.value = enabled
+        ThemeSettingsStorage.saveAmoledEnabled(enabled)
     }
 
     /**
-     * Converts settings saved by older builds. `amoled_enabled = false` produced a non-black
-     * background that the new model no longer offers: it becomes black, and the dynamic flag
-     * alone decides the Fond axis. Existing glass/opaque choices are kept as they are.
-     * A glass user before (glass + dynamic) stays glass + dynamic; an AMOLED user before
-     * (no glass + no dynamic) stays opaque + AMOLED black.
+     * Settings saved by older builds could mix both switches. The dynamic flag decides the Fond
+     * axis and the AMOLED flag follows it, so a dynamic user keeps the tinted theme background
+     * and an AMOLED user keeps pure black.
      */
     private fun migrateAppearanceAxes() {
-        val storedAmoled = ThemeSettingsStorage.loadAmoledEnabled()
-        if (storedAmoled != true) ThemeSettingsStorage.saveAmoledEnabled(true)
-        _amoledEnabled.value = true
-        _dynamicArtworkBackgroundEnabled.value =
-            ThemeSettingsStorage.loadDynamicArtworkBackgroundEnabled() ?: false
+        val dynamic = ThemeSettingsStorage.loadDynamicArtworkBackgroundEnabled() ?: false
+        _dynamicArtworkBackgroundEnabled.value = dynamic
+        val amoled = !dynamic
+        if (ThemeSettingsStorage.loadAmoledEnabled() != amoled) ThemeSettingsStorage.saveAmoledEnabled(amoled)
+        _amoledEnabled.value = amoled
     }
 
     fun setTabBarBehavior(behavior: NuvioTabBarBehavior) {

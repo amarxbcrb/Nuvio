@@ -64,6 +64,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -508,15 +511,24 @@ private fun MobileStreamsLayout(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .blur(16.dp)
+                    .blur(10.dp)
                     .nuvioBackdropSource(streamsGlassBackdrop),
                 contentScale = ContentScale.Crop,
             )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    // As on the title's page: one even, dark wash over the blurred artwork.
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.78f)),
+                    // Light at the top, where the sharp artwork melts into it, darker toward the
+                    // bottom so the links stay readable.
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0.0f to MaterialTheme.colorScheme.background.copy(alpha = 0.45f),
+                                0.35f to MaterialTheme.colorScheme.background.copy(alpha = 0.62f),
+                                1.0f to MaterialTheme.colorScheme.background.copy(alpha = 0.90f),
+                            ),
+                        ),
+                    ),
             )
         }
 
@@ -548,7 +560,7 @@ private fun MobileStreamsLayout(
                         null
                     },
                     genres = genres,
-                    fadeTo = if (cinematicBackground) MaterialTheme.colorScheme.background.copy(alpha = 0.78f) else MaterialTheme.colorScheme.background,
+                    fadeTo = if (cinematicBackground) Color.Transparent else MaterialTheme.colorScheme.background,
                 )
             }
 
@@ -687,7 +699,30 @@ private fun LinksHero(
     var logoFailed by remember(logo) { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth().height(if (episodeLine != null) 480.dp else 460.dp)) {
         if (image != null) {
-            AsyncImage(model = image, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // The artwork itself fades out (alpha mask) over its lower half, so it melts into
+            // what is behind it instead of ending on a visible line.
+            AsyncImage(
+                model = image,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0.0f to Color.Black,
+                                    0.50f to Color.Black,
+                                    0.80f to Color.Black.copy(alpha = 0.45f),
+                                    1.0f to Color.Transparent,
+                                ),
+                            ),
+                            blendMode = BlendMode.DstIn,
+                        )
+                    },
+                contentScale = ContentScale.Crop,
+            )
         }
         Box(
             modifier = Modifier
@@ -697,8 +732,7 @@ private fun LinksHero(
                         colorStops = arrayOf(
                             0.0f to Color.Black.copy(alpha = 0.30f),
                             0.22f to Color.Transparent,
-                            0.55f to Color.Transparent,
-                            0.82f to fadeTo.copy(alpha = fadeTo.alpha * 0.75f),
+                            0.60f to Color.Transparent,
                             1.0f to fadeTo,
                         ),
                     ),

@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.navigationBarsPadding
+import com.nuvio.app.core.ui.nuvioSafeBottomPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -233,9 +233,9 @@ fun CloudStreamSettingsScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black, Color.Black)))
-                .navigationBarsPadding()
                 .imePadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                // Above the floating navigation bar, not under it.
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = nuvioSafeBottomPadding(12.dp)),
         )
     }
 }

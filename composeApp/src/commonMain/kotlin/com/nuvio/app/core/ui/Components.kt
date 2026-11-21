@@ -58,6 +58,9 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.text.style.LineBreak
@@ -220,8 +223,10 @@ fun NuvioScreenHeader(
 }
 
 /**
- * Page title shared by every screen header: shrinks from 33sp to 24sp to fit, breaks only
- * between words (no hyphenation, no mid-word cut), at most 2 lines, then ellipsis.
+ * Page title shared by every screen header: from 33sp down to 24sp, the largest size at which
+ * every word fits on one line and the title takes at most 2 lines. Lines break only between
+ * words. When 24sp still cuts a word (long word next to several actions), it goes down to 18sp;
+ * past that it ellipsizes on one line rather than cutting a word in two.
  */
 @Composable
 fun NuvioHeaderTitle(
@@ -229,23 +234,47 @@ fun NuvioHeaderTitle(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.nuvio.colors.textPrimary,
 ) {
-    Text(
-        text = text,
-        modifier = modifier,
-        autoSize = TextAutoSize.StepBased(
-            minFontSize = 24.sp,
-            maxFontSize = 33.sp,
-            stepSize = 1.sp,
-        ),
-        style = MaterialTheme.typography.displayLarge.copy(
-            lineHeight = 1.15.em,
-            hyphens = Hyphens.None,
-            lineBreak = LineBreak.Heading,
-        ),
-        color = color,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
+    val baseStyle = MaterialTheme.typography.displayLarge.copy(
+        lineHeight = 1.15.em,
+        hyphens = Hyphens.None,
+        lineBreak = LineBreak.Heading,
     )
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(modifier = modifier) {
+        val maxWidthPx = constraints.maxWidth
+        val words = remember(text) { text.split(' ').filter { it.isNotBlank() } }
+        val (fontSize, lines) = remember(text, maxWidthPx, baseStyle) {
+            if (maxWidthPx == Constraints.Infinity) return@remember 33.sp to 2
+            var chosen: Pair<androidx.compose.ui.unit.TextUnit, Int>? = null
+            var size = 33
+            while (size >= 24 && chosen == null) {
+                val style = baseStyle.copy(fontSize = size.sp)
+                val longestWord = words.maxOfOrNull { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width } ?: 0
+                if (longestWord <= maxWidthPx) {
+                    val layout = measurer.measure(text, style, constraints = Constraints(maxWidth = maxWidthPx))
+                    if (layout.lineCount <= 2) chosen = size.sp to 2
+                }
+                size -= 1
+            }
+            // Narrow header (back arrow + actions): rather than cut the word, keep shrinking a
+            // little below 24sp, down to 18sp, before falling back to an ellipsis.
+            while (size >= 18 && chosen == null) {
+                val style = baseStyle.copy(fontSize = size.sp)
+                val longestWord = words.maxOfOrNull { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width } ?: 0
+                if (longestWord <= maxWidthPx) chosen = size.sp to 2
+                size -= 1
+            }
+            chosen ?: (18.sp to 1)
+        }
+        Text(
+            text = text,
+            style = baseStyle.copy(fontSize = fontSize),
+            color = color,
+            maxLines = lines,
+            softWrap = lines > 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable
