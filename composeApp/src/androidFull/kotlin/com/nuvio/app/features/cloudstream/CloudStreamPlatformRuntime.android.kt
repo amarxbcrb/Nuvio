@@ -289,9 +289,13 @@ internal actual object CloudStreamPlatformRuntime {
      * resolve their player in a WebView (StreamHG / hgcloud, used by Amazigh TV…) found no link.
      */
     internal fun refreshExtensionActivity() {
-        activityReference?.get()
-            ?.takeUnless { it.isFinishing || it.isDestroyed }
-            ?.let(CommonActivity::setActivityInstance)
+        val activity = activityReference?.get()?.takeUnless { it.isFinishing || it.isDestroyed } ?: return
+        CommonActivity.setActivityInstance(activity)
+        // The CloudStream library builds its WebView (WebViewResolver) on this context. Built on
+        // the application context, some devices and WebView versions fail to follow the
+        // JavaScript redirections of players such as StreamHG / hgcloud; on the live activity it
+        // behaves as in CloudStream. Same identity wrapper, so extension settings stay the same.
+        setContext(WeakReference(CloudStreamIdentityContext(activity)))
     }
 
     private fun prepareHostContext(context: Context) {
