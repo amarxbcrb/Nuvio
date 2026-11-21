@@ -18,6 +18,13 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +67,25 @@ internal fun BackupProgressSheet(
     )
     val tokens = MaterialTheme.nuvio
     val decimal = stringResource(Res.string.settings_backup_progress_decimal)
+    // The bar never stands still: it catches up quickly with the real progress, then glides
+    // slowly toward the end of the part in progress (without reaching it) until the next update.
+    val latest by rememberUpdatedState(state)
+    var shown by remember { mutableFloatStateOf(state.fraction) }
+    LaunchedEffect(Unit) {
+        var last = withFrameMillis { it }
+        while (true) {
+            val now = withFrameMillis { it }
+            val dt = ((now - last) / 1000f).coerceIn(0f, 0.1f)
+            last = now
+            val target = latest.fraction
+            val ceiling = maxOf(target, latest.nextFraction * 0.97f)
+            shown = when {
+                shown < target -> (shown + ((target - shown) * 8f + 0.02f) * dt).coerceAtMost(target)
+                shown < ceiling -> shown + (ceiling - shown) * 0.35f * dt
+                else -> shown
+            }
+        }
+    }
     NuvioModalBottomSheet(onDismissRequest = {}, sheetState = sheetState) {
         Column(
             modifier = Modifier
@@ -99,7 +125,7 @@ internal fun BackupProgressSheet(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(state.fraction)
+                        .fillMaxWidth(shown)
                         .height(10.dp)
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.themePalette.accentBrush()),
@@ -108,7 +134,7 @@ internal fun BackupProgressSheet(
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${(state.fraction * 100).toInt()} %",
+                    text = "${(shown * 100).toInt()} %",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = tokens.colors.textPrimary,

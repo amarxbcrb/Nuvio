@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
@@ -672,6 +673,8 @@ private fun LinkRow(
     onDownload: (StreamItem) -> Unit,
     onCopyLink: (StreamItem) -> Unit,
     tag: String? = null,
+    showDownload: Boolean = true,
+    enabled: Boolean = true,
 ) {
     val tokens = MaterialTheme.nuvio
     val info = remember(stream) { StreamLanguageDetector.detect(stream, cloudStreamProviderLanguages()[stream.addonId]) }
@@ -688,7 +691,8 @@ private fun LinkRow(
             .drawBehind {
                 if (isFilmSource) drawRect(edgeColor, size = Size(3.dp.toPx(), size.height))
             }
-            .combinedClickable(onClick = onPlay, onLongClick = onLongPress),
+            .alpha(if (enabled) 1f else 0.45f)
+            .combinedClickable(enabled = enabled, onClick = onPlay, onLongClick = onLongPress),
     ) {
         Row(
             modifier = Modifier
@@ -736,14 +740,16 @@ private fun LinkRow(
                 }
             }
             Spacer(Modifier.width(10.dp))
-            RoundLinkButton(
-                icon = Icons.Rounded.Download,
-                label = stringResource(Res.string.streams_download_file),
-                tint = Color.White,
-                container = Color.White.copy(alpha = 0.14f),
-                onClick = { onDownload(stream) },
-            )
-            Spacer(Modifier.width(10.dp))
+            if (showDownload) {
+                RoundLinkButton(
+                    icon = Icons.Rounded.Download,
+                    label = stringResource(Res.string.streams_download_file),
+                    tint = Color.White,
+                    container = Color.White.copy(alpha = 0.14f),
+                    onClick = { onDownload(stream) },
+                )
+                Spacer(Modifier.width(10.dp))
+            }
             RoundLinkButton(
                 icon = Icons.Rounded.PlayArrow,
                 label = stringResource(Res.string.action_play),
@@ -1007,6 +1013,41 @@ private fun MenuFilterPill(
             options.forEach { (key, text) ->
                 MenuItem(text = text, selected = key == selected, onClick = { onSelect(key); expanded = false })
             }
+        }
+    }
+}
+
+
+/**
+ * The links of one source, as on the links screen before playback, for the player's « Sources »
+ * panel: header « LooStream · 4 liens · ♥ », then « Serveur » rows with their badges; the link
+ * playing has the red edge and « en cours ».
+ */
+@Composable
+internal fun PlayerSourceGroupCard(
+    name: String,
+    addonId: String,
+    streams: List<StreamItem>,
+    isCurrent: (StreamItem) -> Boolean,
+    isEnabled: (StreamItem) -> Boolean,
+    onPlay: (StreamItem) -> Unit,
+) {
+    LinkGroup {
+        SourceHeader(name = name, addonId = addonId, count = streams.size)
+        streams.forEach { stream ->
+            LinkDivider()
+            LinkRow(
+                stream = stream,
+                isFilmSource = isCurrent(stream),
+                expanded = false,
+                onPlay = { onPlay(stream) },
+                onToggle = null,
+                onLongPress = null,
+                onDownload = {},
+                onCopyLink = {},
+                showDownload = false,
+                enabled = isEnabled(stream),
+            )
         }
     }
 }

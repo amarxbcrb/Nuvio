@@ -2,6 +2,9 @@ package com.nuvio.app.features.plugins
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -478,6 +481,23 @@ internal fun CloudStreamSettingsSection() {
             }
         }
 
+        // Top card: add a repository, then test the extensions.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .nuvioGlassPanel(RoundedCornerShape(CloudStreamCardRadius)),
+        ) {
+            CloudStreamAddRepositoryBar(
+                embedded = true,
+                modifier = Modifier.padding(16.dp),
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = tokens.colors.borderSubtle,
+            )
+            CloudStreamHealthRow()
+        }
+
         if (state.plugins.isNotEmpty()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -507,9 +527,6 @@ internal fun CloudStreamSettingsSection() {
             }
         }
 
-        if (!LocalCloudStreamAddBarHosted.current) {
-            CloudStreamAddRepositoryBar()
-        }
 
         message?.let {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = tokens.colors.textMuted)
@@ -626,7 +643,7 @@ private fun CloudStreamStat(value: Int, label: String, modifier: Modifier = Modi
  * same card (see [CloudStreamPluginListItem]), the last one closing the rounded corners.
  */
 @Composable
-internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
+internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup, isFirst: Boolean = true, isLast: Boolean = true) {
     val selectedAppLanguage by ThemeSettingsRepository.selectedAppLanguage.collectAsStateWithLifecycle()
     val copy = remember(selectedAppLanguage) { CloudStreamSettingsCopy.forLanguage(selectedAppLanguage) }
     val listState = CloudStreamSettingsListState
@@ -638,18 +655,20 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
     var repositoryMessage by remember(group.key) { mutableStateOf<String?>(null) }
     var confirmRemove by remember(group.key) { mutableStateOf(false) }
     val tokens = MaterialTheme.nuvio
+    // All repositories form one card: rounded top on the first, rounded bottom on the last
+    // (unless its extensions follow below it), a hairline between them.
     val hasRows = expanded && group.plugins.isNotEmpty()
-    val shape = if (hasRows) {
-        RoundedCornerShape(topStart = CloudStreamCardRadius, topEnd = CloudStreamCardRadius)
-    } else {
-        RoundedCornerShape(CloudStreamCardRadius)
-    }
+    val top = if (isFirst) CloudStreamCardRadius else 0.dp
+    val bottom = if (isLast && !hasRows) CloudStreamCardRadius else 0.dp
+    val shape = RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
     val active = group.allPlugins.count { it.isRunnable }
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp)
             .nuvioGlassPanel(shape)
+            .drawBehind {
+                if (!isFirst) drawRect(Color.White.copy(alpha = 0.07f), size = Size(size.width, 1.dp.toPx()))
+            }
             .clickable { listState.toggleExpanded(group.key) }
             .padding(horizontal = 20.dp, vertical = 18.dp),
     ) {
@@ -866,12 +885,11 @@ private fun CloudStreamFilterSheet(onDismiss: () -> Unit, content: @Composable C
  * not answer with the reason and their repository; ticked ones can be removed, or all switched off.
  */
 @Composable
-internal fun CloudStreamHealthButton() {
+internal fun CloudStreamHealthRow() {
     val selectedAppLanguage by ThemeSettingsRepository.selectedAppLanguage.collectAsStateWithLifecycle()
     val copy = remember(selectedAppLanguage) { CloudStreamSettingsCopy.forLanguage(selectedAppLanguage) }
     val listState = CloudStreamSettingsListState
     val enabledCount = listState.plugins.count { it.isRunnable }
-    if (enabledCount == 0 && listState.health.isEmpty()) return
     val results = listState.health.values
     val checked = results.count { it !is CloudStreamHealth.Checking }
     var sheetOpen by remember { mutableStateOf(false) }
@@ -881,27 +899,45 @@ internal fun CloudStreamHealthButton() {
         wasChecking = listState.isCheckingHealth
     }
     val tokens = MaterialTheme.nuvio
+    val enabled = !listState.isCheckingHealth && enabledCount > 0
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp)
-            .height(64.dp)
-            .nuvioGlassPanel(RoundedCornerShape(50))
-            .clickable(enabled = !listState.isCheckingHealth && enabledCount > 0) {
+            .clickable(enabled = enabled) {
                 if (results.isNotEmpty() && listState.failingPlugins.isNotEmpty()) sheetOpen = true
                 else listState.checkExtensions()
-            },
-        horizontalArrangement = Arrangement.Center,
+            }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.CheckCircleOutline, contentDescription = null, tint = tokens.colors.textMuted)
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = if (listState.isCheckingHealth) copy.healthChecking(checked, results.size) else copy.healthCheck(enabledCount),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = tokens.colors.textMuted,
-        )
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF34C759)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier.size(28.dp).clip(CircleShape).background(Color(0xFF0B2A14)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = Color(0xFF34C759), modifier = Modifier.size(18.dp))
+            }
+        }
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(copy.healthRowTitle, style = MaterialTheme.typography.titleMedium, color = tokens.colors.textPrimary)
+            Text(
+                text = when {
+                    listState.isCheckingHealth -> copy.healthChecking(checked, results.size)
+                    listState.failingPlugins.isNotEmpty() -> copy.healthFailingTitle(listState.failingPlugins.size)
+                    else -> copy.healthRowSubtitle(enabledCount)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = tokens.colors.textMuted,
+            )
+        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = tokens.colors.textMuted)
     }
     if (sheetOpen && !listState.isCheckingHealth && results.isNotEmpty()) {
         CloudStreamHealthSheet(copy = copy, onDismiss = { sheetOpen = false })
@@ -1348,6 +1384,10 @@ private class CloudStreamSettingsCopy private constructor(
         english = if (installed > 0) "Its $installed installed extensions are deleted too." else "The repository is removed from the list.",
         french = if (installed > 0) "Ses $installed extensions installées seront aussi supprimées." else "Le dépôt sera retiré de la liste.",
         turkish = if (installed > 0) "Kurulu $installed eklenti de silinir." else "Depo listeden kaldırılır.",
+    )
+    val healthRowTitle: String = text(english = "Test extensions", french = "Tester les extensions", turkish = "Eklentileri test et")
+    fun healthRowSubtitle(count: Int): String = text(
+        english = "$count active to check", french = "$count actives à vérifier", turkish = "$count etkin eklenti",
     )
     val healthDisableAction: String = text(english = "Disable", french = "Désactiver", turkish = "Kapat")
 

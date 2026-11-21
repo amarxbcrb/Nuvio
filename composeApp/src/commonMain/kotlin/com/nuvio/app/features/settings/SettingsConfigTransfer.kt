@@ -332,7 +332,11 @@ internal object SettingsConfigTransfer {
         }
     }
 
+    /** Progress of the import in progress, for parts that report item by item. */
+    private var importTracker: BackupProgressTracker? = null
+
     private suspend fun importAll(settings: JsonObject, tracker: BackupProgressTracker? = null): Int {
+        importTracker = tracker
         ensureRepositoriesLoaded()
         var failures = 0
         suspend fun section(key: String, block: suspend (JsonElement) -> Unit) {
@@ -865,10 +869,13 @@ internal object SettingsConfigTransfer {
             val url = item.string("url")?.trim()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
             url to (item.boolean("enabled") ?: true)
         }.distinctBy { it.first }
-        entries.forEach { (url, _) ->
+        entries.forEachIndexed { index, (url, _) ->
             if (AddonRepository.uiState.value.addons.none { it.manifestUrl == url }) {
                 AddonRepository.addAddon(url)
             }
+            // One addon at a time: the bar moves during the longest part of the import.
+            importTracker?.partial("addons", index + 1)
+            yield()
         }
         entries.forEach { (url, enabled) ->
             AddonRepository.uiState.value.addons.firstOrNull { it.manifestUrl == url }

@@ -678,7 +678,7 @@ private fun MobileSettingsScreen(
             WhatsNewSettingsScreen(onBack = onNavigateBack)
         } else {
         var settingsSearchQuery by rememberSaveable { mutableStateOf("") }
-        var rootSearchVisible by rememberSaveable { mutableStateOf(false) }
+        var rootSearchVisible by rememberSaveable { mutableStateOf(true) }
         var rootSearchRevealAnimating by rememberSaveable { mutableStateOf(false) }
         val listState = rememberLazyListState()
         ScreenActivityEffect(listState) { screenActive ->
@@ -1188,7 +1188,7 @@ private fun TabletSettingsScreen(
                 WhatsNewSettingsScreen(onBack = onNavigateBack)
             } else {
             var settingsSearchQuery by rememberSaveable { mutableStateOf("") }
-            var rootSearchVisible by rememberSaveable { mutableStateOf(false) }
+            var rootSearchVisible by rememberSaveable { mutableStateOf(true) }
             var rootSearchRevealAnimating by rememberSaveable { mutableStateOf(false) }
             val hapticFeedback = LocalHapticFeedback.current
             val hapticScope = rememberCoroutineScope()

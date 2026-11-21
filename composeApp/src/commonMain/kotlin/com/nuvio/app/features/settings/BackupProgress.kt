@@ -22,6 +22,8 @@ data class BackupProgressState(
     val elapsedMs: Long,
     /** Null while no reliable estimate exists (first 1.5 s, or no progress yet). */
     val etaMs: Long?,
+    /** Fraction reached once the part in progress is finished: the bar may glide toward it. */
+    val nextFraction: Float = 0f,
 ) {
     val fraction: Float
         get() = if (totalItems <= 0) 0f else (doneItems.toFloat() / totalItems).coerceIn(0f, 1f)
@@ -79,30 +81,43 @@ internal class BackupProgressTracker(
     private val stages = plan.mapNotNull { backupSectionOf(it.first) }.distinct()
     private val total = plan.sumOf { it.second }
     private var done = 0
+    private var partial = 0
     private var bytes = 0L
+    private var currentKey: String? = plan.firstOrNull()?.first
 
-    init { publish(plan.firstOrNull()?.first) }
+    init { publish(currentKey) }
 
     fun keyDone(key: String, addedBytes: Long = 0L) {
         done += plan.firstOrNull { it.first == key }?.second ?: 0
+        partial = 0
         bytes += addedBytes
-        val next = plan.getOrNull(plan.indexOfFirst { it.first == key } + 1)?.first ?: key
-        publish(next)
+        currentKey = plan.getOrNull(plan.indexOfFirst { it.first == key } + 1)?.first ?: key
+        publish(currentKey)
+    }
+
+    /** Items of [key] finished so far, for long parts (addons installed one by one). */
+    fun partial(key: String, itemsDone: Int) {
+        val weight = plan.firstOrNull { it.first == key }?.second ?: return
+        partial = itemsDone.coerceIn(0, weight)
+        publish(key)
     }
 
     private fun publish(currentKey: String?) {
         val elapsed = start.elapsedNow().inWholeMilliseconds
         val stage = currentKey?.let(::backupSectionOf)
+        val currentWeight = plan.firstOrNull { it.first == currentKey }?.second ?: 0
+        val shownDone = done + partial
         sink.value = BackupProgressState(
             operation = operation,
             stage = stage,
             stageIndex = (stages.indexOf(stage) + 1).coerceAtLeast(1),
             stageCount = stages.size.coerceAtLeast(1),
-            doneItems = done,
+            doneItems = shownDone,
             totalItems = total,
             bytes = bytes,
             elapsedMs = elapsed,
-            etaMs = eta.update(done.toDouble(), total.toDouble(), elapsed),
+            etaMs = eta.update(shownDone.toDouble(), total.toDouble(), elapsed),
+            nextFraction = if (total <= 0) 0f else ((done + currentWeight).toFloat() / total).coerceIn(0f, 1f),
         )
     }
 }

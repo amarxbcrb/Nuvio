@@ -115,13 +115,11 @@ internal fun LazyListScope.settingsRootContent(
             SettingsProfileCard(isTablet = isTablet, onClick = onSwitchProfileClick)
         }
     }
-    // Sans carte de profil, Nuvio Pro garde sa ligne d'abonnement dans une carte à part.
-    if (AppVersionConfig.EDITION == "pro" && !(showAccountSection && onSwitchProfileClick != null)) {
+    // Nuvio Pro seulement : carte « Abonnement actif » sous le profil. Nuvio Plus a le même menu, sans elle.
+    if (AppVersionConfig.EDITION == "pro") {
         item {
             val subscription by LicenceInfo.state.collectAsStateWithLifecycle()
-            subscription?.let { info ->
-                SettingsGroup(isTablet = isTablet) { SubscriptionRow(info = info, isTablet = isTablet) }
-            }
+            subscription?.let { info -> SubscriptionRow(info = info, isTablet = isTablet) }
         }
     }
     if (showAccountSection) {
@@ -302,17 +300,22 @@ private fun SubscriptionRow(info: SubscriptionInfo, isTablet: Boolean) {
     val tokens = MaterialTheme.nuvio
     val endingSoon = info.daysLeft <= 7 && info.nextStartText == null
     val statusColor = if (endingSoon) Color(0xFFFF9F0A) else Color(0xFF34C759)
+    val pill = RoundedCornerShape(50)
     Row(
         modifier = Modifier
+            .padding(top = 12.dp)
             .fillMaxWidth()
+            .clip(pill)
+            .background(Brush.horizontalGradient(listOf(Color(0xFF2A2210), Color(0xFF15120A))))
+            .border(1.dp, Color(0xFFE8A317).copy(alpha = 0.28f), pill)
             .clickable { LicenceInfo.openKeyEntry?.invoke() }
-            .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = 14.dp),
+            .padding(start = 12.dp, end = if (isTablet) 20.dp else 16.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(if (isTablet) 52.dp else 46.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .size(if (isTablet) 60.dp else 56.dp)
+                .clip(CircleShape)
                 .background(Brush.verticalGradient(listOf(Color(0xFFF7C948), Color(0xFFE8A317)))),
             contentAlignment = Alignment.Center,
         ) {
@@ -339,7 +342,7 @@ private fun SubscriptionRow(info: SubscriptionInfo, isTablet: Boolean) {
             Text(
                 text = buildString {
                     append("Jusqu'au ")
-                    append(info.endDateText)
+                    append(shortDate(info.endDateText))
                     append(" · ")
                     append(if (info.daysLeft <= 1) "dernier jour" else "${info.daysLeft} jours")
                     info.nextStartText?.let { append(" · renouvelé dès le ").append(it) }
@@ -422,13 +425,14 @@ private fun SettingsProfileCard(
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
-        // Nuvio Pro seulement : « Abonnement actif » sous le profil. Nuvio Plus a le même menu, sans cette ligne.
-        if (AppVersionConfig.EDITION == "pro") {
-            val subscription by LicenceInfo.state.collectAsStateWithLifecycle()
-            subscription?.let { info ->
-                SettingsGroupDivider(isTablet = isTablet)
-                SubscriptionRow(info = info, isTablet = isTablet)
-            }
-        }
     }
+}
+
+/** « 19 novembre 2027 » → « 19 nov. 2027 », pour tenir sur une ligne. */
+private fun shortDate(text: String): String {
+    val months = mapOf(
+        "janvier" to "janv.", "février" to "févr.", "septembre" to "sept.", "octobre" to "oct.",
+        "novembre" to "nov.", "décembre" to "déc.", "juillet" to "juil.",
+    )
+    return text.split(' ').joinToString(" ") { months[it.lowercase()] ?: it }
 }

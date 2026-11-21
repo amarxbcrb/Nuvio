@@ -75,7 +75,11 @@ val LocalCloudStreamAddBarHosted = compositionLocalOf { false }
  * stays readable over the list it is pinned above.
  */
 @Composable
-fun CloudStreamAddRepositoryBar(modifier: Modifier = Modifier) {
+fun CloudStreamAddRepositoryBar(
+    modifier: Modifier = Modifier,
+    /** Inside another card (the CloudStream page's top card): no panel, no title, icon-only « Coller ». */
+    embedded: Boolean = false,
+) {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     var url by remember { mutableStateOf("") }
@@ -100,20 +104,26 @@ fun CloudStreamAddRepositoryBar(modifier: Modifier = Modifier) {
     }
     val hairline = Color.White.copy(alpha = 0.08f)
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .nuvioGlassPanel(RectangleShape, tintAlpha = 0.70f)
-            .drawBehind { drawRect(hairline, size = Size(size.width, 1.dp.toPx())) }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = if (embedded) {
+            modifier.fillMaxWidth()
+        } else {
+            modifier
+                .fillMaxWidth()
+                .nuvioGlassPanel(RectangleShape, tintAlpha = 0.70f)
+                .drawBehind { drawRect(hairline, size = Size(size.width, 1.dp.toPx())) }
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+        },
     ) {
-        Text(
-            text = stringResource(Res.string.cloudstream_add_repository_title),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = tokens.colors.textMuted,
-        )
-        Spacer(Modifier.height(10.dp))
+        if (!embedded) {
+            Text(
+                text = stringResource(Res.string.cloudstream_add_repository_title),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = tokens.colors.textMuted,
+            )
+            Spacer(Modifier.height(10.dp))
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -152,6 +162,7 @@ fun CloudStreamAddRepositoryBar(modifier: Modifier = Modifier) {
                     )
                 }
                 Spacer(Modifier.width(8.dp))
+                val pasteLabel = stringResource(Res.string.cloudstream_add_repository_paste)
                 Row(
                     modifier = Modifier
                         .height(48.dp)
@@ -163,17 +174,20 @@ fun CloudStreamAddRepositoryBar(modifier: Modifier = Modifier) {
                                 message = null
                             }
                         }
-                        .padding(horizontal = 16.dp),
+                        .semantics { contentDescription = pasteLabel }
+                        .padding(horizontal = if (embedded) 14.dp else 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Rounded.ContentPaste, contentDescription = null, tint = tokens.colors.textPrimary, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.cloudstream_add_repository_paste),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = tokens.colors.textPrimary,
-                    )
+                    if (!embedded) {
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = pasteLabel,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = tokens.colors.textPrimary,
+                        )
+                    }
                 }
             }
             val enabled = url.isNotBlank() && !busy

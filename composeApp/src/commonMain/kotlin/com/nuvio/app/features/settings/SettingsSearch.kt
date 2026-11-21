@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -1239,9 +1240,10 @@ private fun SettingsSearchField(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
         singleLine = true,
-        shape = tokens.shapes.compactCard,
+        // Pill always shown at the top of the settings.
+        shape = RoundedCornerShape(50),
         leadingIcon = {
             Icon(
                 imageVector = Icons.Rounded.Search,
@@ -1271,10 +1273,10 @@ private fun SettingsSearchField(
         },
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = tokens.colors.textPrimary),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = tokens.colors.borderFocus,
-            unfocusedBorderColor = tokens.colors.borderDefault,
-            focusedContainerColor = tokens.colors.surfaceCard,
-            unfocusedContainerColor = tokens.colors.surfaceCard,
+            focusedBorderColor = tokens.colors.accent.copy(alpha = 0.6f),
+            unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+            focusedContainerColor = com.nuvio.app.core.ui.NuvioCardColor,
+            unfocusedContainerColor = com.nuvio.app.core.ui.NuvioCardColor,
             cursorColor = tokens.colors.accent,
         ),
     )

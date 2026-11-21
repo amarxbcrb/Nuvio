@@ -213,29 +213,16 @@ fun CloudStreamSettingsScreen(
         return
     }
 
-    // The add field sits fixed at the bottom of the page (outside the list), over a black fade.
-    Box(modifier = Modifier.fillMaxSize()) {
-        CompositionLocalProvider(LocalCloudStreamAddBarHosted provides true) {
-            NuvioScreen(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                stickyHeader {
-                    NuvioScreenHeader(
-                        title = stringResource(Res.string.compose_settings_page_cloudstream),
-                        onBack = onBack,
-                    )
-                }
-                cloudStreamSettingsContent()
-                item { Spacer(Modifier.height(140.dp)) }
-            }
+    NuvioScreen(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        stickyHeader {
+            NuvioScreenHeader(
+                title = stringResource(Res.string.compose_settings_page_cloudstream),
+                onBack = onBack,
+            )
         }
-        CloudStreamAddRepositoryBar(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                // Just above the floating navigation bar, not under it.
-                .padding(bottom = nuvioSafeBottomPadding(8.dp))
-                .imePadding(),
-        )
+        cloudStreamSettingsContent()
     }
 }
 

@@ -91,7 +91,7 @@ private fun SettingsCard(
 }
 
 private val SettingsCardShape = RoundedCornerShape(26.dp)
-private val SettingsIconShape = RoundedCornerShape(8.dp)
+private val SettingsIconShape = RoundedCornerShape(14.dp)
 
 /** iOS settings icon colours (blue, green, orange, red, purple, pink, teal, indigo, yellow, gray). */
 private val SettingsIconColors = listOf(
@@ -123,7 +123,7 @@ internal fun SettingsGroup(
 internal fun SettingsGroupDivider(isTablet: Boolean) {
     val tokens = MaterialTheme.nuvio
     HorizontalDivider(
-        modifier = Modifier.padding(start = if (isTablet) 70.dp else 60.dp),
+        modifier = Modifier.padding(start = if (isTablet) 86.dp else 76.dp),
         thickness = tokens.borders.hairline,
         color = tokens.colors.borderSubtle,
     )
@@ -292,7 +292,8 @@ internal fun SettingsNavigationRow(
     onClick: () -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
-    val iconSize = if (isTablet) 34.dp else 30.dp
+    // Same size everywhere, a bit larger than before (iOS-style tiles).
+    val iconSize = if (isTablet) 50.dp else 46.dp
     val verticalPadding = if (isTablet) 14.dp else 12.dp
     val horizontalPadding = if (isTablet) 20.dp else 16.dp
 
@@ -328,14 +329,14 @@ internal fun SettingsNavigationRow(
                             androidx.compose.foundation.Image(
                                 painter = iconPainter,
                                 contentDescription = null,
-                                modifier = Modifier.size(if (isTablet) 24.dp else 20.dp),
+                                modifier = Modifier.size(if (isTablet) 30.dp else 26.dp),
                                 contentScale = ContentScale.Fit,
                             )
                         } else if (icon != null) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                modifier = Modifier.size(if (isTablet) 20.dp else 18.dp),
+                                modifier = Modifier.size(if (isTablet) 26.dp else 24.dp),
                                 tint = Color.White,
                             )
                         }

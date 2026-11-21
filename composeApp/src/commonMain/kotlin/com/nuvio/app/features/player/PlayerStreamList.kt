@@ -28,6 +28,7 @@ import com.nuvio.app.features.streams.StreamCardSkeleton
 import com.nuvio.app.features.streams.StreamItem
 import com.nuvio.app.features.streams.StreamsUiState
 import com.nuvio.app.features.streams.isSelectableForPlayback
+import com.nuvio.app.features.streams.PlayerSourceGroupCard
 import com.nuvio.app.features.streams.rememberStreamSizeLabelFormat
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_player_no_streams_found
@@ -112,22 +113,19 @@ internal fun PlayerStreamList(
                         )
                     }
                 }
-                itemsIndexed(
-                    items = streams,
-                    key = { index, _ -> streamKeys[index] },
-                ) { _, stream ->
-                    StreamCard(
-                        stream = stream,
-                        enabled = stream.isSelectableForPlayback(debridSettings.canResolvePlayableLinks),
-                        appendInstantServiceToDefaultName = debridSettings.canResolvePlayableLinks &&
-                            !debridSettings.hasCustomStreamFormatting,
-                        showFileSizeBadges = streamBadgeSettings.showFileSizeBadges,
-                        showAddonLogo = streamBadgeSettings.showAddonLogo,
-                        badgePlacement = streamBadgeSettings.badgePlacement,
-                        isCurrent = stream.isCurrentPlayerStream(currentStreamUrl, currentStreamName),
-                        currentLabel = currentLabel,
-                        onClick = { onStreamSelected(stream) },
-                    )
+                // One card per source, as on the links screen before playback.
+                val canResolve = debridSettings.canResolvePlayableLinks
+                visibleGroups.filter { it.streams.isNotEmpty() }.forEachIndexed { index, group ->
+                    item(key = "player_source:$index:${group.addonId}") {
+                        PlayerSourceGroupCard(
+                            name = group.addonName,
+                            addonId = group.addonId,
+                            streams = group.streams,
+                            isCurrent = { it.isCurrentPlayerStream(currentStreamUrl, currentStreamName) },
+                            isEnabled = { it.isSelectableForPlayback(canResolve) },
+                            onPlay = onStreamSelected,
+                        )
+                    }
                 }
                 if (streamsUiState.isAnyLoading) {
                     item {
