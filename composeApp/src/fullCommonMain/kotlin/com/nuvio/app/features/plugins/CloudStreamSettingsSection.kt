@@ -1209,14 +1209,7 @@ private fun CloudStreamPluginCard(
                     }
                 }
             }
-            // The pin only shows on favourite extensions, to remove them from the favourites.
-            if (isPinnedSource) {
-                CloudStreamRowIcon(
-                    icon = Icons.Rounded.PushPin,
-                    contentDescription = copy.unpinSource,
-                    tint = tokens.colors.accent,
-                ) { PinnedStreamSourcesRepository.setPinned(sourceId, false) }
-            }
+            // No pin button: favourite sources are managed with the ♥ on the links screen.
             if (!plugin.isInstalled || plugin.hasUpdate) {
                 CloudStreamRowIcon(
                     icon = if (plugin.hasUpdate) Icons.Rounded.Refresh else Icons.Rounded.Download,
