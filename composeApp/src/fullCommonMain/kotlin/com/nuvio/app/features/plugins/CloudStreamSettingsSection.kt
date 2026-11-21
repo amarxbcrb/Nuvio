@@ -108,6 +108,7 @@ import com.nuvio.app.features.streams.BingeGroupCacheStorage
 import com.nuvio.app.features.streams.PinnedStreamSourcesRepository
 import com.nuvio.app.features.streams.cloudStreamAddonId
 import com.nuvio.app.features.streams.streamLanguageDisplayName
+import com.nuvio.app.features.streams.languageFlag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -676,6 +677,14 @@ internal fun CloudStreamRepositoryGroupCard(group: CloudStreamPluginGroup) {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
             }
+            if (repository != null) {
+                CloudStreamRowIcon(
+                    icon = Icons.Rounded.DeleteOutline,
+                    contentDescription = copy.removeRepositoryContentDescription,
+                    tint = CloudStreamDangerColor,
+                ) { CloudStreamRepository.removeRepository(repository.manifest.sourceUrl) }
+                Spacer(Modifier.width(4.dp))
+            }
             Icon(
                 if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
@@ -1074,7 +1083,9 @@ private fun CloudStreamPluginCard(
                 )
                 Text(
                     listOfNotNull(
-                        plugin.metadata.language?.uppercase() ?: copy.unknownLanguage,
+                        plugin.metadata.language?.let { code ->
+                            listOfNotNull(languageFlag(code), code.uppercase()).joinToString(" ")
+                        } ?: copy.unknownLanguage,
                     ).plus(plugin.metadata.rawTvTypes.mapNotNull(copy::tvTypeLabel).distinct().take(2))
                         .joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
@@ -1708,3 +1719,4 @@ internal enum class CloudStreamInstallFilter {
     Installed,
     NotInstalled,
 }
+

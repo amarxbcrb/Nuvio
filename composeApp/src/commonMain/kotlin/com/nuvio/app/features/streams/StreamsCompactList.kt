@@ -725,7 +725,10 @@ private fun LinkRow(
                     resolution?.let {
                         LinkBadge(it, if (it == "480p") LinkBadgeTone.Neutral else LinkBadgeTone.Quality)
                     }
-                    LinkBadge(versionShort(info.versionKey()), LinkBadgeTone.Language)
+                    LinkBadge(
+                        listOfNotNull(info.versionFlag(), versionShort(info.versionKey())).joinToString(" "),
+                        LinkBadgeTone.Language,
+                    )
                     format?.let { LinkBadge(it, LinkBadgeTone.Neutral) }
                     stream.behaviorHints.videoSize?.let { LinkBadge(formatLinkSizeShort(it), LinkBadgeTone.Neutral) }
                 }
