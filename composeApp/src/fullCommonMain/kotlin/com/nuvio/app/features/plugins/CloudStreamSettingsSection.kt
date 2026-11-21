@@ -178,6 +178,35 @@ internal object CloudStreamSettingsListState {
         return ids.size
     }
 
+    /**
+     * Removes one source of a repository from the list without touching the others: uninstalled
+     * if it was installed, then hidden so it no longer shows (the repository stays).
+     */
+    fun removeSource(pluginId: String) {
+        val plugin = plugins.firstOrNull { it.metadata.id.value == pluginId } ?: return
+        if (plugin.isInstalled) CloudStreamRepository.removePlugin(pluginId)
+        hiddenPluginIds = hiddenPluginIds + pluginId
+        persistHidden()
+    }
+
+    /** Languages of the listed sources with how many sources each has, most common first. */
+    val sourceLanguages: List<Pair<String, Int>> by derivedStateOf {
+        shownPlugins
+            .mapNotNull { it.metadata.language?.trim()?.lowercase()?.takeIf(String::isNotEmpty) }
+            .groupingBy { it }.eachCount()
+            .entries.sortedByDescending { it.value }
+            .map { it.key to it.value }
+    }
+
+    /** Removes every listed source of [language] (all repositories); returns how many. */
+    fun removeLanguage(language: String): Int {
+        val targets = shownPlugins.filter { it.metadata.language?.trim()?.lowercase() == language }
+        targets.forEach { if (it.isInstalled) CloudStreamRepository.removePlugin(it.metadata.id.value) }
+        hiddenPluginIds = hiddenPluginIds + targets.map { it.metadata.id.value }
+        persistHidden()
+        return targets.size
+    }
+
     fun showHidden() {
         hiddenPluginIds = emptySet()
         persistHidden()
@@ -606,6 +635,41 @@ internal fun CloudStreamSettingsSection() {
                     }
                 },
             )
+            // Remove every source of one language, across all repositories.
+            var languageToRemove by remember { mutableStateOf<String?>(null) }
+            val sourceLanguages = CloudStreamSettingsListState.sourceLanguages
+            if (sourceLanguages.isNotEmpty()) {
+                Spacer(Modifier.height(16.dp))
+                NuvioDropdownField(
+                    label = copy.removeByLanguageLabel,
+                    valueLabel = copy.removeByLanguageHint,
+                    options = sourceLanguages.map { (code, count) ->
+                        NuvioSelectOption(code, "${listOfNotNull(languageFlag(code), streamLanguageDisplayName(code)).joinToString(" ")} ($count)")
+                    },
+                    selectedKeys = emptySet(),
+                    onSelect = { option -> languageToRemove = option.key },
+                )
+            }
+            languageToRemove?.let { code ->
+                val count = sourceLanguages.firstOrNull { it.first == code }?.second ?: 0
+                DialogSurface(
+                    onDismissRequest = { languageToRemove = null },
+                    title = copy.removeLanguageConfirmTitle(streamLanguageDisplayName(code), count),
+                    message = copy.removeLanguageConfirmMessage,
+                ) {
+                    DialogButtons {
+                        DialogButton(text = copy.cancel, onClick = { languageToRemove = null })
+                        DialogButton(
+                            text = copy.tileRemove,
+                            style = DialogButtonStyle.Destructive,
+                            onClick = {
+                                languageToRemove = null
+                                message = copy.languageRemoved(CloudStreamSettingsListState.removeLanguage(code))
+                            },
+                        )
+                    }
+                }
+            }
             val notInstalledCount = CloudStreamSettingsListState.shownPlugins.count { !it.isInstalled }
             if (notInstalledCount > 0) {
                 TextButton(
@@ -1221,15 +1285,14 @@ private fun CloudStreamPluginCard(
                     tint = if (canInstall) tokens.colors.accent else tokens.colors.textMuted.copy(alpha = 0.4f),
                 ) { installOrUpdate() }
             }
-            if (plugin.isInstalled) {
-                CloudStreamRowIcon(
-                    icon = Icons.Rounded.DeleteOutline,
-                    contentDescription = copy.remove,
-                    tint = CloudStreamDangerColor,
-                ) {
-                    CloudStreamRepository.removePlugin(plugin.metadata.id.value)
-                    onMessage(copy.pluginRemoved(plugin.metadata.name))
-                }
+            // Removes this source only (the repository and its other sources stay).
+            CloudStreamRowIcon(
+                icon = Icons.Rounded.DeleteOutline,
+                contentDescription = copy.remove,
+                tint = CloudStreamDangerColor,
+            ) {
+                CloudStreamSettingsListState.removeSource(plugin.metadata.id.value)
+                onMessage(copy.pluginRemoved(plugin.metadata.name))
             }
             Spacer(Modifier.width(6.dp))
             Switch(
@@ -1412,6 +1475,23 @@ private class CloudStreamSettingsCopy private constructor(
     val healthRowTitle: String = text(english = "Test extensions", french = "Tester les extensions", turkish = "Eklentileri test et")
     fun healthRowSubtitle(count: Int): String = text(
         english = "$count active to check", french = "$count actives à vérifier", turkish = "$count etkin eklenti",
+    )
+    val removeByLanguageLabel: String = text(
+        english = "Remove all sources of a language", french = "Supprimer toutes les sources d’une langue", turkish = "Bir dilin tüm kaynaklarını sil",
+    )
+    val removeByLanguageHint: String = text(english = "Choose a language", french = "Choisir une langue", turkish = "Dil seç")
+    val removeLanguageConfirmMessage: String = text(
+        english = "Installed ones are uninstalled; they can be shown again with « Show removed ».",
+        french = "Celles qui sont installées seront désinstallées. Vous pourrez les réafficher avec « Réafficher ».",
+        turkish = "Kurulu olanlar kaldırılır.",
+    )
+    fun removeLanguageConfirmTitle(language: String, count: Int): String = text(
+        english = "Remove the $count $language sources?",
+        french = "Supprimer les $count sources en $language ?",
+        turkish = "$count $language kaynağı silinsin mi?",
+    )
+    fun languageRemoved(count: Int): String = text(
+        english = "$count sources removed", french = "$count sources supprimées", turkish = "$count kaynak silindi",
     )
     val healthDisableAction: String = text(english = "Disable", french = "Désactiver", turkish = "Kapat")
 
