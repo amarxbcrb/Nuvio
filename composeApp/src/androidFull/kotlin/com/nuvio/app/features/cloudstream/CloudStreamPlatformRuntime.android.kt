@@ -282,8 +282,20 @@ internal actual object CloudStreamPlatformRuntime {
         }
     }
 
+    /**
+     * Hands extensions the activity that is alive now. Android recreates the activity (language
+     * change, the app coming back after being trimmed from memory, picture-in-picture…) while
+     * loaded extensions stay in memory: without this they kept the destroyed one, and those that
+     * resolve their player in a WebView (StreamHG / hgcloud, used by Amazigh TV…) found no link.
+     */
+    internal fun refreshExtensionActivity() {
+        activityReference?.get()
+            ?.takeUnless { it.isFinishing || it.isDestroyed }
+            ?.let(CommonActivity::setActivityInstance)
+    }
+
     private fun prepareHostContext(context: Context) {
-        activityReference?.get()?.let(CommonActivity::setActivityInstance)
+        refreshExtensionActivity()
         CloudStreamApp.context = context
         setContext(WeakReference(context))
     }
@@ -507,6 +519,7 @@ private class AndroidDexCloudStreamProvider(
         // player held back the links the others had already found. The links are taken a few
         // seconds after the first one arrives, without waiting for the slow players; the
         // extension runs detached so one that ignores cancellation cannot hold the caller.
+        CloudStreamPlatformRuntime.refreshExtensionActivity()
         val task = linkScope.async {
             // The detached extension keeps the activity until it ends, even after this call returns.
             CommonActivity.withUi {
@@ -568,8 +581,10 @@ private class AndroidDexCloudStreamProvider(
      * it to search or resolve links (CloudStream always has one). Their start-up and the catalogs
      * of the home screen do not get it, so their donation and Discord popups stay hidden.
      */
-    private suspend fun <T> withExtensionUi(block: suspend CoroutineScope.() -> T): T =
-        withContext(Dispatchers.IO) { CommonActivity.withUi { block() } }
+    private suspend fun <T> withExtensionUi(block: suspend CoroutineScope.() -> T): T {
+        CloudStreamPlatformRuntime.refreshExtensionActivity()
+        return withContext(Dispatchers.IO) { CommonActivity.withUi { block() } }
+    }
 
     private fun findProvider(className: String): MainAPI =
         providers.firstOrNull { it.javaClass.name == className }
