@@ -2,6 +2,9 @@ package com.nuvio.app.features.home.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -230,7 +233,11 @@ private fun ContinueWatchingItem.fallbackUrlForArtwork(artworkUrl: String?): Str
     val trimmed = artworkUrl.trim()
     if (trimmed == poster?.trim() && !rawPosterUrl.isNullOrBlank() && rawPosterUrl != poster) return rawPosterUrl
     if (trimmed == background?.trim() && !rawBackgroundUrl.isNullOrBlank() && rawBackgroundUrl != background) return rawBackgroundUrl
-    return null
+    // Sources not linked to IMDb (CloudStream…) often have a background that does not load: the
+    // card then retries with the next artwork (poster, episode image) instead of staying empty.
+    return listOf(poster, background, episodeThumbnail, imageUrl, rawPosterUrl, rawBackgroundUrl)
+        .firstOrNull { candidate -> !candidate.isNullOrBlank() && candidate.trim() != trimmed }
+        ?.trim()
 }
 
 @Composable
@@ -726,14 +733,16 @@ private fun ContinueWatchingCard(
                 zoomCornerRadius = cardMetrics.cornerRadius,
             ),
     ) {
-        if (imageUrl != null) {
+        run {
             val cwFallbackUrl = item.fallbackUrlForArtwork(imageUrl)
             val cwImageModel = continuewatchingImageModel(
-                imageUrl = cloudLibraryDisplayArtworkUrl(imageUrl),
+                imageUrl = imageUrl?.let(::cloudLibraryDisplayArtworkUrl),
                 fallbackUrl = cwFallbackUrl,
             )
+            val (sourceArtwork, onArtworkError) = rememberSourceArtwork(item, imageUrl)
             AsyncImage(
-                model = cwImageModel,
+                model = sourceArtwork ?: cwImageModel,
+                onError = { onArtworkError() },
                 contentDescription = item.title,
                 modifier = Modifier
                     .fillMaxSize()
@@ -925,6 +934,7 @@ private fun ContinueWatchingWideCard(
             fallbackUrl = item.fallbackUrlForArtwork(artworkUrl),
             contentScale = if (item.isCloudLibraryItem()) ContentScale.Fit else ContentScale.Crop,
             modifier = Modifier.fillMaxHeight(),
+            sourceItem = item,
         )
         Column(
             modifier = Modifier
@@ -1056,14 +1066,16 @@ private fun ContinueWatchingPosterCard(
                 useEpisodeThumbnails = useEpisodeThumbnails,
                 artworkUrl = imageUrl,
             )
-            if (imageUrl != null) {
+            run {
                 val cwFallbackUrl = item.fallbackUrlForArtwork(imageUrl)
                 val cwImageModel = continuewatchingImageModel(
-                    imageUrl = cloudLibraryDisplayArtworkUrl(imageUrl),
+                    imageUrl = imageUrl?.let(::cloudLibraryDisplayArtworkUrl),
                     fallbackUrl = cwFallbackUrl,
                 )
+                val (sourceArtwork, onArtworkError) = rememberSourceArtwork(item, imageUrl)
                 AsyncImage(
-                    model = cwImageModel,
+                    model = sourceArtwork ?: cwImageModel,
+                    onError = { onArtworkError() },
                     contentDescription = item.title,
                     modifier = Modifier
                         .fillMaxSize()
@@ -1163,19 +1175,22 @@ private fun ArtworkPanel(
     fallbackUrl: String? = null,
     contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier = Modifier,
+    sourceItem: ContinueWatchingItem? = null,
 ) {
     Box(
         modifier = modifier
             .width(width)
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        if (imageUrl != null) {
+        run {
             val artworkModel = continuewatchingImageModel(
-                imageUrl = cloudLibraryDisplayArtworkUrl(imageUrl),
+                imageUrl = imageUrl?.let(::cloudLibraryDisplayArtworkUrl),
                 fallbackUrl = fallbackUrl,
             )
+            val (sourceArtwork, onArtworkError) = rememberSourceArtwork(sourceItem, imageUrl)
             AsyncImage(
-                model = artworkModel,
+                model = sourceArtwork ?: artworkModel,
+                onError = { onArtworkError() },
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
@@ -1317,5 +1332,52 @@ internal fun rememberContinueWatchingLayout(
             wideBadgeTextSize = 12.sp,
             posterBadgeTextSize = 10.sp,
         )
+    }
+}
+
+
+/**
+ * Last fallback for Continue Watching artwork: when the saved images are missing or do not load
+ * (sources not linked to IMDb, such as CloudStream extensions), the title page is asked from the
+ * source itself, as the catalog does, and its background or poster is used.
+ */
+@Composable
+private fun rememberSourceArtwork(
+    item: ContinueWatchingItem?,
+    primaryUrl: String?,
+): Pair<String?, () -> Unit> {
+    val key = item?.let { ContinueWatchingSourceArtwork.key(it) }
+    var failed by remember(key, primaryUrl) { mutableStateOf(primaryUrl.isNullOrBlank()) }
+    var url by remember(key) { mutableStateOf(key?.let(ContinueWatchingSourceArtwork::cached)) }
+    LaunchedEffect(failed, key) {
+        if (failed && item != null && url == null) {
+            url = ContinueWatchingSourceArtwork.load(item, exclude = primaryUrl)
+        }
+    }
+    return (if (failed) url else null) to { failed = true }
+}
+
+internal object ContinueWatchingSourceArtwork {
+    private val cache = mutableMapOf<String, String?>()
+
+    fun key(item: ContinueWatchingItem): String = "${item.parentMetaType}:${item.parentMetaId}"
+
+    fun cached(key: String): String? = cache[key]
+
+    suspend fun load(item: ContinueWatchingItem, exclude: String?): String? {
+        val key = key(item)
+        if (cache.containsKey(key)) return cache[key]
+        val meta = try {
+            com.nuvio.app.features.details.MetaDetailsRepository.fetch(item.parentMetaType, item.parentMetaId)
+        } catch (error: kotlin.coroutines.cancellation.CancellationException) {
+            throw error
+        } catch (_: Throwable) {
+            null
+        }
+        val url = listOf(meta?.background, meta?.poster)
+            .firstOrNull { !it.isNullOrBlank() && it.trim() != exclude?.trim() }
+            ?.trim()
+        cache[key] = url
+        return url
     }
 }
