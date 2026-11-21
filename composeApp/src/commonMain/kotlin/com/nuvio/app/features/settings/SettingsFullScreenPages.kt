@@ -7,6 +7,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.ui.NuvioScreen
 import com.nuvio.app.core.ui.NuvioScreenHeader
@@ -201,16 +213,30 @@ fun CloudStreamSettingsScreen(
         return
     }
 
-    NuvioScreen(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        stickyHeader {
-            NuvioScreenHeader(
-                title = stringResource(Res.string.compose_settings_page_cloudstream),
-                onBack = onBack,
-            )
+    // The add field sits fixed at the bottom of the page (outside the list), over a black fade.
+    Box(modifier = Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalCloudStreamAddBarHosted provides true) {
+            NuvioScreen(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                stickyHeader {
+                    NuvioScreenHeader(
+                        title = stringResource(Res.string.compose_settings_page_cloudstream),
+                        onBack = onBack,
+                    )
+                }
+                cloudStreamSettingsContent()
+                item { Spacer(Modifier.height(96.dp)) }
+            }
         }
-        cloudStreamSettingsContent()
+        CloudStreamAddRepositoryBar(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black, Color.Black)))
+                .navigationBarsPadding()
+                .imePadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        )
     }
 }
 

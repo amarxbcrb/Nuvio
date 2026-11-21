@@ -105,4 +105,5 @@
     <string name="links_use_default">Back to the default profile (%1$s)</string>
     <string name="settings_default_profile">Default profile</string>
     <string name="settings_default_profile_desc">Used for every movie and series. Another profile can be chosen for one title from its sources screen.</string>
+    <string name="links_current">playing</string>
 </resources>

@@ -150,14 +150,14 @@ internal fun LinkSummary(
  * favorites, or removes it. Nothing is shown for « Tout », which has no favorites.
  */
 @Composable
-internal fun FavoriteHeartButton(addonId: String, modifier: Modifier = Modifier) {
+internal fun FavoriteHeartButton(addonId: String, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 38.dp) {
     val pinnedSourceIds by rememberPinnedStreamSourceIds()
     val activeProfile by StreamProfileRepository.active.collectAsStateWithLifecycle()
     if (!activeProfile.hasPreferences || addonId.isBlank() || addonId.startsWith("debrid:")) return
     val favorite = pinnedSourceIds.any { it == addonId || it.startsWith("$addonId|") }
     Box(
         modifier = modifier
-            .size(38.dp)
+            .size(size)
             .nuvioPressScale(pressedScale = 0.85f)
             .clip(CircleShape)
             .background(if (favorite) FavoriteRed.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.10f))

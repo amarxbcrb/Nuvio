@@ -51,4 +51,7 @@
     <string name="extensions_catalog_footnote">Les catalogues affichés sur l’Accueil se choisissent depuis l’Accueil.</string>
     <string name="details_play_source">Source : %1$s</string>
     <string name="details_trailer_action">Bande-annonce</string>
+    <string name="cloudstream_add_repository_placeholder">Coller le lien d’un dépôt</string>
+    <string name="cloudstream_add_repository_action">Ajouter</string>
+    <string name="cloudstream_add_repository_added">Dépôt %1$s ajouté.</string>
 </resources>
