@@ -226,16 +226,15 @@ fun CloudStreamSettingsScreen(
                     )
                 }
                 cloudStreamSettingsContent()
-                item { Spacer(Modifier.height(96.dp)) }
+                item { Spacer(Modifier.height(140.dp)) }
             }
         }
         CloudStreamAddRepositoryBar(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black, Color.Black)))
-                .imePadding()
-                // Above the floating navigation bar, not under it.
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = nuvioSafeBottomPadding(12.dp)),
+                // Just above the floating navigation bar, not under it.
+                .padding(bottom = nuvioSafeBottomPadding(8.dp))
+                .imePadding(),
         )
     }
 }

@@ -48,6 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import com.nuvio.app.core.build.AppVersionConfig
 import com.nuvio.app.core.licence.LicenceInfo
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material.icons.rounded.Verified
 import com.nuvio.app.core.licence.SubscriptionInfo
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_about_made_with
@@ -104,28 +110,18 @@ internal fun LazyListScope.settingsRootContent(
     showAboutSection: Boolean = true,
     showAdvancedSection: Boolean = true,
 ) {
-    // Nuvio Pro seulement : section « Abonnement » avec les jours restants ; un appui ouvre la fenêtre de nouvelle clé.
-    if (AppVersionConfig.EDITION == "pro") {
-        item {
-            val subscription by LicenceInfo.state.collectAsStateWithLifecycle()
-            subscription?.let { info ->
-                SettingsSection(title = "Abonnement", isTablet = isTablet) {
-                    SettingsGroup(isTablet = isTablet) {
-                        SettingsNavigationRow(
-                            title = subscriptionTitle(info),
-                            description = subscriptionDescription(info),
-                            icon = Icons.Rounded.Lock,
-                            isTablet = isTablet,
-                            onClick = { LicenceInfo.openKeyEntry?.invoke() },
-                        )
-                    }
-                }
-            }
-        }
-    }
     if (showAccountSection && onSwitchProfileClick != null) {
         item {
             SettingsProfileCard(isTablet = isTablet, onClick = onSwitchProfileClick)
+        }
+    }
+    // Sans carte de profil, Nuvio Pro garde sa ligne d'abonnement dans une carte à part.
+    if (AppVersionConfig.EDITION == "pro" && !(showAccountSection && onSwitchProfileClick != null)) {
+        item {
+            val subscription by LicenceInfo.state.collectAsStateWithLifecycle()
+            subscription?.let { info ->
+                SettingsGroup(isTablet = isTablet) { SubscriptionRow(info = info, isTablet = isTablet) }
+            }
         }
     }
     if (showAccountSection) {
@@ -298,26 +294,69 @@ internal fun LazyListScope.settingsRootContent(
     }
 }
 
-private fun daysLeftText(info: SubscriptionInfo): String = when {
-    info.daysLeft <= 1 -> "Dernier jour d'accès"
-    else -> "${info.daysLeft} jours restants"
-}
 
-/** « Karim Benali », ou les jours restants pour une clé sans nom. */
-private fun subscriptionTitle(info: SubscriptionInfo): String = info.clientName ?: daysLeftText(info)
 
-private fun subscriptionDescription(info: SubscriptionInfo): String = buildString {
-    if (info.clientName != null) {
-        append(daysLeftText(info))
-        append(" · ")
-    }
-    append("Accès jusqu'au ")
-    append(info.endDateText)
-    if (info.nextStartText != null) {
-        append(" · Renouvelé à partir du ")
-        append(info.nextStartText)
-    } else {
-        append(" · Appuie pour entrer une nouvelle clé")
+/** « ● Abonnement actif » / « Jusqu'au 19 novembre 2027 · 364 jours » ; un appui ouvre la fenêtre de nouvelle clé. */
+@Composable
+private fun SubscriptionRow(info: SubscriptionInfo, isTablet: Boolean) {
+    val tokens = MaterialTheme.nuvio
+    val endingSoon = info.daysLeft <= 7 && info.nextStartText == null
+    val statusColor = if (endingSoon) Color(0xFFFF9F0A) else Color(0xFF34C759)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { LicenceInfo.openKeyEntry?.invoke() }
+            .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(if (isTablet) 52.dp else 46.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Brush.verticalGradient(listOf(Color(0xFFF7C948), Color(0xFFE8A317)))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Rounded.Verified, contentDescription = null, tint = Color(0xFF1A1300), modifier = Modifier.size(26.dp))
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(9.dp).clip(CircleShape).background(statusColor))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = when {
+                        info.daysLeft <= 1 -> "Dernier jour d'accès"
+                        endingSoon -> "Abonnement bientôt terminé"
+                        else -> "Abonnement actif"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = tokens.colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = buildString {
+                    append("Jusqu'au ")
+                    append(info.endDateText)
+                    append(" · ")
+                    append(if (info.daysLeft <= 1) "dernier jour" else "${info.daysLeft} jours")
+                    info.nextStartText?.let { append(" · renouvelé dès le ").append(it) }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = tokens.colors.textMuted,
+            )
+            info.clientName?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = tokens.colors.textMuted)
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            contentDescription = null,
+            tint = tokens.colors.textMuted,
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
@@ -382,6 +421,14 @@ private fun SettingsProfileCard(
                 tint = tokens.colors.textMuted,
                 modifier = Modifier.padding(start = 8.dp),
             )
+        }
+        // Nuvio Pro seulement : « Abonnement actif » sous le profil. Nuvio Plus a le même menu, sans cette ligne.
+        if (AppVersionConfig.EDITION == "pro") {
+            val subscription by LicenceInfo.state.collectAsStateWithLifecycle()
+            subscription?.let { info ->
+                SettingsGroupDivider(isTablet = isTablet)
+                SubscriptionRow(info = info, isTablet = isTablet)
+            }
         }
     }
 }

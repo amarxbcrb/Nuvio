@@ -500,8 +500,10 @@ private fun MobileStreamsLayout(
 ) {
     val streamsGlassBackdrop = rememberNuvioBackdrop()
     // The AMOLED black theme has no blurred artwork behind the links.
-    val cinematicBackground = backgroundMode == StreamBackgroundMode.Cinematic && heroArtwork != null &&
-        com.nuvio.app.core.ui.glass.LiquidGlassSettings.enabled
+    // Follows the app Style, like the title page: Liquid glass gives the blurred artwork and glass
+    // cards, Opaque gives plain dark cards.
+    val glassStyle by com.nuvio.app.features.settings.ThemeSettingsRepository.liquidGlassEffectsEnabled.collectAsStateWithLifecycle()
+    val cinematicBackground = heroArtwork != null && glassStyle && com.nuvio.app.core.ui.glass.isLiquidGlassAvailable()
     val streamsGlassEnabled = cinematicBackground
     var showSearchSettings by remember { mutableStateOf(false) }
     Box(modifier = modifier.fillMaxSize()) {

@@ -25,8 +25,6 @@ import com.nuvio.app.features.streams.StreamLanguageChoices
 import com.nuvio.app.features.streams.StreamLanguagePreferencesRepository
 import com.nuvio.app.features.streams.streamLanguageDisplayName
 import com.nuvio.app.features.streams.languageFlag
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.settings_cloudstream_language_description
 import nuvio.composeapp.generated.resources.settings_cloudstream_language_section
@@ -187,8 +185,7 @@ internal fun CloudStreamExtensionLanguageSettings(
     }
 }
 
-/** Multi-choice language chips with flags (« 🇫🇷 Français »); « Toutes » clears the choice. */
-@OptIn(ExperimentalLayoutApi::class)
+/** Multi-choice language list in a dropdown, with flags (« 🇫🇷 Français »); « Toutes » clears the choice. */
 @Composable
 private fun LanguageChipRow(
     title: String,
@@ -200,22 +197,25 @@ private fun LanguageChipRow(
     onToggle: (String) -> Unit,
 ) {
     val anyLabel = stringResource(Res.string.settings_language_any)
-    val sorted = remember(languages) { languages.sortedBy { streamLanguageDisplayName(it).lowercase() } }
+    fun label(code: String) = listOfNotNull(languageFlag(code), streamLanguageDisplayName(code)).joinToString(" ")
+    val options = remember(languages, anyLabel) {
+        listOf(NuvioSelectOption(key = "", label = anyLabel)) +
+            languages
+                .sortedBy { streamLanguageDisplayName(it).lowercase() }
+                .map { code -> NuvioSelectOption(key = code, label = label(code)) }
+    }
     SettingsDropdownRow(title = title, description = description, isTablet = isTablet) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Chip(label = anyLabel, selected = selected.isEmpty(), onClick = onClearSelection)
-            sorted.forEach { code ->
-                val name = streamLanguageDisplayName(code)
-                Chip(
-                    label = listOfNotNull(languageFlag(code), name).joinToString(" "),
-                    selected = code in selected,
-                    onClick = { onToggle(code) },
-                )
-            }
-        }
+        NuvioDropdownField(
+            valueLabel = if (selected.isEmpty()) {
+                anyLabel
+            } else {
+                selected.sortedBy { streamLanguageDisplayName(it).lowercase() }.joinToString(", ") { label(it) }
+            },
+            options = options,
+            selectedKeys = if (selected.isEmpty()) setOf("") else selected,
+            multiSelect = true,
+            onSelect = { option -> if (option.key.isEmpty()) onClearSelection() else onToggle(option.key) },
+        )
     }
 }
 

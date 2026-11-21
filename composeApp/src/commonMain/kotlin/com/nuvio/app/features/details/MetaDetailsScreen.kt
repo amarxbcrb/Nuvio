@@ -1177,7 +1177,15 @@ fun MetaDetailsScreen(
                     val contentHorizontalPadding = if (isTablet) 32.dp else 18.dp
                     val contentMaxWidth = detailTabletContentMaxWidth(maxWidth, isTablet)
                     val backdropUrl = meta.background ?: meta.poster
-                    val backgroundMode = metaScreenSettingsUiState.backgroundMode
+                    // The title page follows the app Style, like the links screen: Liquid glass gives the
+                    // cinematic glass background, Opaque never does (dominant colour stays available).
+                    val glassStyle by com.nuvio.app.features.settings.ThemeSettingsRepository.liquidGlassEffectsEnabled.collectAsStateWithLifecycle()
+                    val storedBackgroundMode = metaScreenSettingsUiState.backgroundMode
+                    val backgroundMode = when {
+                        glassStyle && com.nuvio.app.core.ui.glass.isLiquidGlassAvailable() -> MetaScreenBackgroundMode.Cinematic
+                        storedBackgroundMode == MetaScreenBackgroundMode.Cinematic -> MetaScreenBackgroundMode.Normal
+                        else -> storedBackgroundMode
+                    }
                     val dominantColorEnabled = backgroundMode == MetaScreenBackgroundMode.DominantColor &&
                         !backdropUrl.isNullOrBlank()
                     val extractedDominantColor = rememberArtworkDominantColor(

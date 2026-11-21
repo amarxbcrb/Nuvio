@@ -59,6 +59,7 @@ import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.themePalette
 import com.nuvio.app.core.ui.appIconPainter
 import nuvio.composeapp.generated.resources.Res
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Videocam
@@ -815,8 +816,9 @@ private fun PlayButton(
                 ),
             shape = playShape,
             color = if (playEnabled) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant,
+            // White on any saturated accent (red, blue…), dark only on a very light one (white, gold).
             contentColor = if (playEnabled) {
-                MaterialTheme.nuvio.colors.onAccent
+                if (MaterialTheme.nuvio.colors.accent.luminance() > 0.6f) Color(0xFF111111) else Color.White
             } else {
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             },
@@ -845,11 +847,8 @@ private fun PlayButton(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = playLabel,
-                    style = if (isTablet) {
-                        MaterialTheme.typography.titleMedium
-                    } else {
-                        MaterialTheme.typography.titleSmall
-                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
