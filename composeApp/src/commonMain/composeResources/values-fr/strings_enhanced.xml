@@ -30,4 +30,25 @@
     <string name="profile_clear_history_saved">Enregistrés (bibliothèque)</string>
     <string name="profile_clear_history_confirm">Effacer</string>
     <string name="profile_clear_history_cancel">Annuler</string>
+    <string name="appearance_style_section">STYLE</string>
+    <string name="appearance_style_glass">Liquid glass</string>
+    <string name="appearance_style_glass_hint">Verre et flou. Plus gourmand.</string>
+    <string name="appearance_style_opaque">Opaque</string>
+    <string name="appearance_style_opaque_hint">Sans verre ni flou. Plus fluide.</string>
+    <string name="appearance_accent_section">COULEUR D’ACCENT</string>
+    <string name="appearance_home_section">ÉCRAN D’ACCUEIL</string>
+    <string name="appearance_background">Fond</string>
+    <string name="appearance_background_description">Le style des surfaces reste le même dans les deux cas</string>
+    <string name="appearance_background_amoled">Noir AMOLED</string>
+    <string name="appearance_background_dynamic">Dynamique</string>
+    <string name="appearance_catalog_underline">Soulignement des catalogues</string>
+    <string name="appearance_catalog_underline_description">Barre d’accent sous chaque titre de catalogue</string>
+    <string name="extensions_cloudstream_title">CloudStream / CS3</string>
+    <string name="extensions_cloudstream_short">Dépôts et fournisseurs CS3</string>
+    <string name="extensions_addons_short">Catalogues de films et séries</string>
+    <string name="extensions_plugins_short">Scrapers JavaScript</string>
+    <string name="extensions_recent_searches_short">Proposées sous la barre de recherche</string>
+    <string name="extensions_catalog_footnote">Les catalogues affichés sur l’Accueil se choisissent depuis l’Accueil.</string>
+    <string name="details_play_source">Source : %1$s</string>
+    <string name="details_trailer_action">Bande-annonce</string>
 </resources>

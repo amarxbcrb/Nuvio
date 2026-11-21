@@ -19,4 +19,15 @@
     <string name="settings_backup_import_partial">Configuration importée, mais certaines parties n’ont pas pu être appliquées</string>
     <string name="settings_backup_import_failed">Impossible d’importer la configuration</string>
     <string name="settings_backup_import_invalid">Ce fichier n’est pas une configuration Nuvio</string>
+    <string name="settings_backup_progress_exporting">Exportation en cours</string>
+    <string name="settings_backup_progress_importing">Importation en cours</string>
+    <string name="settings_backup_progress_stage">%1$s · %2$d sur %3$d</string>
+    <string name="settings_backup_progress_eta">environ %1$d s restantes</string>
+    <string name="settings_backup_progress_eta_minutes">environ %1$d min restantes</string>
+    <string name="settings_backup_progress_items">Éléments</string>
+    <string name="settings_backup_progress_size">Taille</string>
+    <string name="settings_backup_progress_size_kb">%1$s Ko</string>
+    <string name="settings_backup_progress_size_mb">%1$s Mo</string>
+    <string name="settings_backup_progress_elapsed">Temps écoulé</string>
+    <string name="settings_backup_progress_decimal">,</string>
 </resources>

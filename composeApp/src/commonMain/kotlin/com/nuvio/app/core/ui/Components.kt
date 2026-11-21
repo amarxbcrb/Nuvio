@@ -58,6 +58,11 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -181,6 +186,10 @@ fun NuvioScreenHeader(
             verticalAlignment = Alignment.Bottom,
         ) {
             Row(
+                // weight(fill = false): the title takes what remains after the actions, so a long
+                // title wraps instead of running under them. The back arrow is a sibling inside
+                // this Row, so its width is always reserved before the title is measured.
+                modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(tokens.spacing.controlGap),
             ) {
@@ -198,11 +207,7 @@ fun NuvioScreenHeader(
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "screen_header_title",
                 ) { currentTitle ->
-                    Text(
-                        text = currentTitle,
-                        style = MaterialTheme.typography.displayLarge,
-                        color = tokens.colors.textPrimary,
-                    )
+                    NuvioHeaderTitle(text = currentTitle)
                 }
             }
             Row(
@@ -212,6 +217,35 @@ fun NuvioScreenHeader(
             )
         }
     }
+}
+
+/**
+ * Page title shared by every screen header: shrinks from 33sp to 24sp to fit, breaks only
+ * between words (no hyphenation, no mid-word cut), at most 2 lines, then ellipsis.
+ */
+@Composable
+fun NuvioHeaderTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.nuvio.colors.textPrimary,
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        autoSize = TextAutoSize.StepBased(
+            minFontSize = 24.sp,
+            maxFontSize = 33.sp,
+            stepSize = 1.sp,
+        ),
+        style = MaterialTheme.typography.displayLarge.copy(
+            lineHeight = 1.15.em,
+            hyphens = Hyphens.None,
+            lineBreak = LineBreak.Heading,
+        ),
+        color = color,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable

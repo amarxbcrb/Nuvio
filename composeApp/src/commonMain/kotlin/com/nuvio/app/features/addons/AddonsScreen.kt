@@ -54,6 +54,7 @@ import com.nuvio.app.core.ui.NuvioScreen
 import com.nuvio.app.core.ui.NuvioScreenHeader
 import com.nuvio.app.core.ui.NuvioSectionLabel
 import com.nuvio.app.core.ui.NuvioStatusModal
+import com.nuvio.app.core.ui.NuvioEmptyState
 import com.nuvio.app.core.ui.NuvioSurfaceCard
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.*
@@ -380,31 +381,15 @@ private sealed interface AddonInstallModalState {
 private fun EmptyStateCard(
     usePersonalMediaCopy: Boolean,
 ) {
-    NuvioSurfaceCard {
-        Text(
-            text = stringResource(
-                if (usePersonalMediaCopy) {
-                    Res.string.addons_appstore_empty_title
-                } else {
-                    Res.string.addons_empty_title
-                },
-            ),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(
-                if (usePersonalMediaCopy) {
-                    Res.string.addons_appstore_empty_subtitle
-                } else {
-                    Res.string.addons_empty_subtitle
-                },
-            ),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    NuvioEmptyState(
+        icon = Icons.Rounded.Extension,
+        title = stringResource(
+            if (usePersonalMediaCopy) Res.string.addons_appstore_empty_title else Res.string.addons_empty_title,
+        ),
+        message = stringResource(
+            if (usePersonalMediaCopy) Res.string.addons_appstore_empty_subtitle else Res.string.addons_empty_subtitle,
+        ),
+    )
 }
 
 @Composable

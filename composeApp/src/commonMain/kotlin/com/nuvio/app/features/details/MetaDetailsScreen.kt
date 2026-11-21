@@ -1333,6 +1333,10 @@ fun MetaDetailsScreen(
                                                             onPlayExternallyClick = onPlayExternallyClick,
                                                             userRating = titleUserRating,
                                                             onRateClick = openTitleRating,
+                                                            onTrailerClick = (heroTrailerCandidate ?: meta.trailers.firstOrNull())
+                                                                ?.let { trailer -> { resolveTrailer(trailer) } },
+                                                            playSource = rememberDetailPlaySource(meta.id, playButtonLabel),
+                                                            showSourceSegment = rememberShowSourceSegment(meta.type, meta.id),
                                                         )
                                                     }
                                                 } else {
@@ -2544,6 +2548,10 @@ private fun ConfiguredMetaSections(
                     iconActionRow = settings.iconActionRow,
                     userRating = userRating,
                     onRateClick = onRateClick,
+                    onTrailerClick = (selectHeroTrailer(meta.trailers) ?: meta.trailers.firstOrNull())
+                        ?.let { trailer -> { onTrailerClick(trailer) } },
+                    playSource = rememberDetailPlaySource(meta.id, playButtonLabel),
+                    showSourceSegment = rememberShowSourceSegment(meta.type, meta.id),
                 )
             }
             MetaScreenSectionKey.OVERVIEW -> {

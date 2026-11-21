@@ -22,4 +22,25 @@
     <string name="settings_interface_style_amoled_hint">Plain black, no glass or blur: lighter for less powerful phones</string>
     <string name="settings_interface_style_glass_unsupported">Not supported by this phone</string>
     <string name="details_choose_source">Choose the source</string>
+    <string name="appearance_style_section">STYLE</string>
+    <string name="appearance_style_glass">Liquid glass</string>
+    <string name="appearance_style_glass_hint">Glass and blur. Heavier.</string>
+    <string name="appearance_style_opaque">Opaque</string>
+    <string name="appearance_style_opaque_hint">No glass or blur. Smoother.</string>
+    <string name="appearance_accent_section">ACCENT COLOR</string>
+    <string name="appearance_home_section">HOME SCREEN</string>
+    <string name="appearance_background">Background</string>
+    <string name="appearance_background_description">Surface style stays the same either way</string>
+    <string name="appearance_background_amoled">AMOLED black</string>
+    <string name="appearance_background_dynamic">Dynamic</string>
+    <string name="appearance_catalog_underline">Catalog underline</string>
+    <string name="appearance_catalog_underline_description">Accent bar under each catalog title</string>
+    <string name="extensions_cloudstream_title">CloudStream / CS3</string>
+    <string name="extensions_cloudstream_short">CS3 repositories and providers</string>
+    <string name="extensions_addons_short">Movie and series catalogs</string>
+    <string name="extensions_plugins_short">JavaScript scrapers</string>
+    <string name="extensions_recent_searches_short">Suggested under the search bar</string>
+    <string name="extensions_catalog_footnote">Home catalogs are chosen from the Home screen.</string>
+    <string name="details_play_source">Source: %1$s</string>
+    <string name="details_trailer_action">Trailer</string>
 </resources>

@@ -59,6 +59,16 @@ import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.themePalette
 import com.nuvio.app.core.ui.appIconPainter
 import nuvio.composeapp.generated.resources.Res
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.font.FontWeight
+import nuvio.composeapp.generated.resources.details_play_source
+import nuvio.composeapp.generated.resources.details_trailer_action
 import nuvio.composeapp.generated.resources.action_play
 import nuvio.composeapp.generated.resources.details_download_action
 import nuvio.composeapp.generated.resources.details_actions_menu_label
@@ -116,6 +126,8 @@ fun DetailActionButtons(
     iconActions: List<DetailSecondaryAction> = emptyList(),
     userRating: Int? = null,
     onRateClick: (() -> Unit)? = null,
+    onSourceSegmentClick: (() -> Unit)? = null,
+    playSource: DetailPlaySource? = null,
 ) {
     val playPainter = appIconPainter(AppIconResource.PlayerPlay)
     val buttonHeight = if (isTablet) 56.dp else 52.dp
@@ -147,7 +159,12 @@ fun DetailActionButtons(
                 onPlayClick = onPlayClick,
                 onPlayLongClick = onPlayLongClick,
                 modifier = Modifier.fillMaxWidth(),
+                onSourceSegmentClick = onSourceSegmentClick,
+                sourceSegmentLabel = stringResource(Res.string.details_choose_source),
             )
+            playSource?.let { source ->
+                PlaySourceLine(source = source, modifier = Modifier.fillMaxWidth())
+            }
             if (iconActions.isNotEmpty()) {
                 DetailIconActionRow(
                     actions = iconActions,
@@ -381,6 +398,9 @@ fun DetailActions(
     iconActionRow: Boolean = false,
     userRating: Int? = null,
     onRateClick: (() -> Unit)? = null,
+    onTrailerClick: (() -> Unit)? = null,
+    playSource: DetailPlaySource? = null,
+    showSourceSegment: Boolean = true,
 ) {
     val actionSet = detailActionSet(
         isSaved = isSaved,
@@ -393,8 +413,9 @@ fun DetailActions(
         onDownloadClick = onDownloadClick,
         onPlayFromStartClick = onPlayFromStartClick,
         onPlayExternallyClick = onPlayExternallyClick,
-        // The long press on Play stays; this button does the same for those who don't know it.
+        // The long press on Play stays; the split button's right segment does the same.
         onChooseSourceClick = onPlayLongClick,
+        onTrailerClick = onTrailerClick,
     )
     val shuffleAction = actionSet.shuffle
     val watchedAction = actionSet.watched
@@ -419,6 +440,8 @@ fun DetailActions(
         onPlayLongClick = onPlayLongClick,
         userRating = userRating,
         onRateClick = onRateClick,
+        onSourceSegmentClick = onPlayLongClick.takeIf { iconActionRow && showSourceSegment },
+        playSource = playSource.takeIf { iconActionRow },
     )
 }
 
@@ -443,6 +466,7 @@ private fun detailActionSet(
     onPlayFromStartClick: (() -> Unit)?,
     onPlayExternallyClick: (() -> Unit)?,
     onChooseSourceClick: (() -> Unit)?,
+    onTrailerClick: (() -> Unit)?,
 ): DetailActionSet {
     val shuffleAction = onShuffleClick?.let { onClick ->
         DetailSecondaryAction(
@@ -477,8 +501,13 @@ private fun detailActionSet(
     val downloadLabel = stringResource(Res.string.details_download_action)
     val playFromStartLabel = stringResource(Res.string.details_action_start_from_beginning)
     val externalLabel = stringResource(Res.string.streams_open_external_player)
+    val trailerLabel = stringResource(Res.string.details_trailer_action)
     val iconActions = buildList {
-        chooseSourceAction?.let(::add)
+        // First round button: the trailer (hidden when there is none). Choosing the source moved
+        // to the right segment of the split « Lire » button.
+        onTrailerClick?.let { trailer ->
+            add(DetailSecondaryAction(label = trailerLabel, icon = Icons.Rounded.Videocam, onClick = trailer))
+        }
         onDownloadClick?.let { download ->
             add(DetailSecondaryAction(label = downloadLabel, icon = Icons.Rounded.Download, onClick = download))
         }
@@ -521,6 +550,9 @@ fun TabletDetailHeroActions(
     onPlayExternallyClick: (() -> Unit)? = null,
     userRating: Int? = null,
     onRateClick: (() -> Unit)? = null,
+    onTrailerClick: (() -> Unit)? = null,
+    playSource: DetailPlaySource? = null,
+    showSourceSegment: Boolean = true,
 ) {
     val actionSet = detailActionSet(
         isSaved = isSaved,
@@ -533,9 +565,12 @@ fun TabletDetailHeroActions(
         onDownloadClick = onDownloadClick,
         onPlayFromStartClick = onPlayFromStartClick,
         onPlayExternallyClick = onPlayExternallyClick,
-        // The long press on Play stays; this button does the same for those who don't know it.
+        // The long press on Play stays; the split button's right segment does the same.
         onChooseSourceClick = onPlayLongClick,
+        onTrailerClick = onTrailerClick,
     )
+    val sourceSegmentClick = onPlayLongClick.takeIf { showSourceSegment }
+    val sourceSegmentLabel = stringResource(Res.string.details_choose_source)
     val playPainter = appIconPainter(AppIconResource.PlayerPlay)
     val buttonHeight = 56.dp
     val playShape = RoundedCornerShape(40.dp)
@@ -557,6 +592,8 @@ fun TabletDetailHeroActions(
                 onPlayClick = onPlayClick,
                 onPlayLongClick = onPlayLongClick,
                 modifier = Modifier.weight(1f),
+                onSourceSegmentClick = sourceSegmentClick,
+                sourceSegmentLabel = sourceSegmentLabel,
             )
             if (onRateClick != null) {
                 Box(
@@ -599,7 +636,15 @@ fun TabletDetailHeroActions(
                 modifier = Modifier
                     .widthIn(max = TabletPortraitActionsMaxWidth)
                     .fillMaxWidth(),
+                onSourceSegmentClick = sourceSegmentClick,
+                sourceSegmentLabel = sourceSegmentLabel,
             )
+            playSource?.let { source ->
+                PlaySourceLine(
+                    source = source,
+                    modifier = Modifier.widthIn(max = TabletPortraitActionsMaxWidth).fillMaxWidth(),
+                )
+            }
             DetailIconActionRow(
                 actions = actionSet.icons,
                 preferredSize = buttonHeight,
@@ -751,6 +796,8 @@ private fun PlayButton(
     onPlayClick: () -> Unit,
     onPlayLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onSourceSegmentClick: (() -> Unit)? = null,
+    sourceSegmentLabel: String? = null,
 ) {
         Surface(
             modifier = modifier
@@ -773,9 +820,10 @@ private fun PlayButton(
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             },
         ) {
+          Row(modifier = Modifier.fillMaxWidth().height(buttonHeight)) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .combinedClickable(
                         enabled = playEnabled,
                         onClick = {
@@ -805,7 +853,82 @@ private fun PlayButton(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            // Split button: right segment (86dp) opens the source choice; Play keeps the left part.
+            if (onSourceSegmentClick != null) {
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                )
+                Row(
+                    modifier = Modifier
+                        .width(PlaySourceSegmentWidth)
+                        .fillMaxHeight()
+                        .clickable(enabled = playEnabled, role = Role.Button, onClick = onSourceSegmentClick)
+                        .semantics { if (sourceSegmentLabel != null) contentDescription = sourceSegmentLabel },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Dns,
+                        contentDescription = null,
+                        modifier = Modifier.size(if (isTablet) 22.dp else 20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+          }
         }
+}
+
+private val PlaySourceSegmentWidth = 86.dp
+
+/** Source that « Lire » will use, shown under the button with its language/quality badges. */
+data class DetailPlaySource(
+    val name: String,
+    val badges: List<String> = emptyList(),
+)
+
+@Composable
+private fun PlaySourceLine(
+    source: DetailPlaySource,
+    modifier: Modifier = Modifier,
+) {
+    val label = stringResource(Res.string.details_play_source, source.name)
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.nuvio.colors.textMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        source.badges.forEach { badge ->
+            Text(
+                text = badge,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.nuvio.colors.textPrimary,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = 0.12f))
+                    .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(50))
+                    .padding(horizontal = 10.dp, vertical = 3.dp),
+            )
+        }
+    }
 }
 
 private data class IconActionRowLayout(val size: Dp, val spacing: Dp, val fits: Boolean)

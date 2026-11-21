@@ -176,7 +176,6 @@ fun SettingsScreen(
             ThemeSettingsRepository.ensureLoaded()
             ThemeSettingsRepository.selectedTheme
         }.collectAsStateWithLifecycle()
-        val amoledEnabled by remember { ThemeSettingsRepository.amoledEnabled }.collectAsStateWithLifecycle()
         val dynamicArtworkBackgroundEnabled by remember {
             ThemeSettingsRepository.dynamicArtworkBackgroundEnabled
         }.collectAsStateWithLifecycle()
@@ -449,8 +448,6 @@ fun SettingsScreen(
                         rememberLastProfileEnabled = profileSettingsState.rememberLastProfileEnabled,
                         selectedTheme = selectedTheme,
                         onThemeSelected = ThemeSettingsRepository::setTheme,
-                        amoledEnabled = amoledEnabled,
-                        onAmoledToggle = ThemeSettingsRepository::setAmoled,
                         dynamicArtworkBackgroundEnabled = dynamicArtworkBackgroundEnabled,
                         onDynamicArtworkBackgroundToggle = ThemeSettingsRepository::setDynamicArtworkBackground,
                         showCatalogAccentEnabled = showCatalogAccentEnabled,
@@ -529,8 +526,6 @@ fun SettingsScreen(
                         rememberLastProfileEnabled = profileSettingsState.rememberLastProfileEnabled,
                         selectedTheme = selectedTheme,
                         onThemeSelected = ThemeSettingsRepository::setTheme,
-                        amoledEnabled = amoledEnabled,
-                        onAmoledToggle = ThemeSettingsRepository::setAmoled,
                         dynamicArtworkBackgroundEnabled = dynamicArtworkBackgroundEnabled,
                         onDynamicArtworkBackgroundToggle = ThemeSettingsRepository::setDynamicArtworkBackground,
                         showCatalogAccentEnabled = showCatalogAccentEnabled,
@@ -622,8 +617,6 @@ private fun MobileSettingsScreen(
     rememberLastProfileEnabled: Boolean,
     selectedTheme: AppTheme,
     onThemeSelected: (AppTheme) -> Unit,
-    amoledEnabled: Boolean,
-    onAmoledToggle: (Boolean) -> Unit,
     dynamicArtworkBackgroundEnabled: Boolean,
     onDynamicArtworkBackgroundToggle: (Boolean) -> Unit,
     showCatalogAccentEnabled: Boolean,
@@ -868,8 +861,6 @@ private fun MobileSettingsScreen(
                     isTablet = false,
                     selectedTheme = selectedTheme,
                     onThemeSelected = onThemeSelected,
-                    amoledEnabled = amoledEnabled,
-                    onAmoledToggle = onAmoledToggle,
                     dynamicArtworkBackgroundEnabled = dynamicArtworkBackgroundEnabled,
                     onDynamicArtworkBackgroundToggle = onDynamicArtworkBackgroundToggle,
                     showCatalogAccentEnabled = showCatalogAccentEnabled,
@@ -1085,8 +1076,6 @@ private fun TabletSettingsScreen(
     rememberLastProfileEnabled: Boolean,
     selectedTheme: AppTheme,
     onThemeSelected: (AppTheme) -> Unit,
-    amoledEnabled: Boolean,
-    onAmoledToggle: (Boolean) -> Unit,
     dynamicArtworkBackgroundEnabled: Boolean,
     onDynamicArtworkBackgroundToggle: (Boolean) -> Unit,
     showCatalogAccentEnabled: Boolean,
@@ -1374,8 +1363,6 @@ private fun TabletSettingsScreen(
                         isTablet = true,
                         selectedTheme = selectedTheme,
                         onThemeSelected = onThemeSelected,
-                        amoledEnabled = amoledEnabled,
-                        onAmoledToggle = onAmoledToggle,
                         dynamicArtworkBackgroundEnabled = dynamicArtworkBackgroundEnabled,
                         onDynamicArtworkBackgroundToggle = onDynamicArtworkBackgroundToggle,
                         showCatalogAccentEnabled = showCatalogAccentEnabled,

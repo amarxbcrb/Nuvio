@@ -389,27 +389,27 @@ internal fun settingsSearchEntries(
     addRow(
         page = SettingsPage.Appearance,
         key = "theme",
-        title = stringResource(Res.string.settings_appearance_section_theme),
+        title = stringResource(Res.string.appearance_accent_section),
         pageLabel = layoutPage,
-        section = stringResource(Res.string.settings_appearance_section_theme),
+        section = stringResource(Res.string.appearance_accent_section),
         icon = Icons.Rounded.Palette,
     )
     addRow(
         page = SettingsPage.Appearance,
-        key = "amoled",
-        title = stringResource(Res.string.settings_appearance_amoled_black),
-        description = stringResource(Res.string.settings_appearance_amoled_description),
+        key = "style",
+        title = stringResource(Res.string.appearance_style_section),
+        description = stringResource(Res.string.appearance_style_opaque_hint),
         pageLabel = layoutPage,
-        section = stringResource(Res.string.settings_appearance_section_display),
+        section = stringResource(Res.string.appearance_style_section),
         icon = Icons.Rounded.Palette,
     )
     addRow(
         page = SettingsPage.Appearance,
         key = "dynamic-artwork-background",
-        title = stringResource(Res.string.settings_appearance_dynamic_artwork_background),
-        description = stringResource(Res.string.settings_appearance_dynamic_artwork_background_description),
+        title = stringResource(Res.string.appearance_background),
+        description = stringResource(Res.string.appearance_background_description),
         pageLabel = layoutPage,
-        section = stringResource(Res.string.settings_appearance_section_display),
+        section = stringResource(Res.string.appearance_home_section),
         icon = Icons.Rounded.Palette,
     )
     if (liquidGlassNativeTabBarSupported) {

@@ -110,7 +110,7 @@ object ThemeSettingsRepository {
         _selectedTheme.value = AppTheme.WHITE
         _customThemePreference.value = CustomThemeColors.Default
         _customThemeColors.value = CustomThemeColors.solid(CustomThemeColors.Default.second)
-        _amoledEnabled.value = false
+        _amoledEnabled.value = true
         _tabBarBehavior.value = NuvioTabBarBehavior.Default
         _liquidGlassNativeTabBarEnabled.value = NuvioTabBarBehavior.Default.isEnabled
         _dynamicArtworkBackgroundEnabled.value = false
@@ -149,14 +149,12 @@ object ThemeSettingsRepository {
         _selectedThemePreference.value = theme
         _customThemePreference.value = CustomThemeColors.decode(ThemeSettingsStorage.loadCustomThemeColors())
         applyEffectiveTheme()
-        _amoledEnabled.value = ThemeSettingsStorage.loadAmoledEnabled() ?: false
+        migrateAppearanceAxes()
         val behavior = NuvioTabBarBehavior.fromKey(ThemeSettingsStorage.loadTabBarBehavior())
             ?: NuvioTabBarBehavior.fromLegacyEnabled(
                 ThemeSettingsStorage.loadLiquidGlassNativeTabBarEnabled(),
             )
         applyTabBarBehavior(behavior)
-        _dynamicArtworkBackgroundEnabled.value =
-            ThemeSettingsStorage.loadDynamicArtworkBackgroundEnabled() ?: false
         _showCatalogAccentEnabled.value =
             ThemeSettingsStorage.loadShowCatalogAccentEnabled() ?: false
         val appLanguage = AppLanguage.fromCode(ThemeSettingsStorage.loadSelectedAppLanguage())
@@ -207,21 +205,30 @@ object ThemeSettingsRepository {
     }
 
     /**
-     * The two themes: liquid glass, or AMOLED black, which removes every glass and blur effect
-     * (glass panels, blurred artwork behind the pages, blurred transitions) for phones that do not
-     * handle them. The separate switches stay for fine tuning.
+     * Appearance is two independent axes, all four combinations valid:
+     *  - Style: liquid glass or opaque  -> [liquidGlassEffectsEnabled] ([setLiquidGlassEffectsEnabled]).
+     *  - Fond:  AMOLED black or dynamic -> [dynamicArtworkBackgroundEnabled] ([setBackgroundMode]).
+     * The background base is always pure black (#000): the dynamic mode tints it from the artwork.
+     * The old "Noir AMOLED" and "Liquid glass effects" switches are gone; their stored keys are
+     * still read and written so backups, sync and older builds keep working.
      */
-    fun setInterfaceStyle(amoledBlack: Boolean) {
-        setAmoled(amoledBlack)
-        setLiquidGlassEffectsEnabled(!amoledBlack)
-        setDynamicArtworkBackground(!amoledBlack)
+    fun setBackgroundMode(dynamic: Boolean) {
+        setDynamicArtworkBackground(dynamic)
     }
 
-    fun setAmoled(enabled: Boolean) {
-        ensureLoaded()
-        if (_amoledEnabled.value == enabled) return
-        _amoledEnabled.value = enabled
-        ThemeSettingsStorage.saveAmoledEnabled(enabled)
+    /**
+     * Converts settings saved by older builds. `amoled_enabled = false` produced a non-black
+     * background that the new model no longer offers: it becomes black, and the dynamic flag
+     * alone decides the Fond axis. Existing glass/opaque choices are kept as they are.
+     * A glass user before (glass + dynamic) stays glass + dynamic; an AMOLED user before
+     * (no glass + no dynamic) stays opaque + AMOLED black.
+     */
+    private fun migrateAppearanceAxes() {
+        val storedAmoled = ThemeSettingsStorage.loadAmoledEnabled()
+        if (storedAmoled != true) ThemeSettingsStorage.saveAmoledEnabled(true)
+        _amoledEnabled.value = true
+        _dynamicArtworkBackgroundEnabled.value =
+            ThemeSettingsStorage.loadDynamicArtworkBackgroundEnabled() ?: false
     }
 
     fun setTabBarBehavior(behavior: NuvioTabBarBehavior) {

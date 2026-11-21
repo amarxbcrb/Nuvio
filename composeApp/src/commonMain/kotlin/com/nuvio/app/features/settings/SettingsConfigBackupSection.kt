@@ -106,16 +106,20 @@ internal fun SettingsConfigBackupSection(isTablet: Boolean) {
             onDismiss = { choosingExport = false },
             onExport = { sections, extensionIds ->
                 choosingExport = false
-                val content = runCatching {
-                    SettingsConfigTransfer.export(includeSensitiveData, sections, extensionIds)
-                }.getOrNull()
-                if (content == null) {
-                    NuvioToastController.show(exportFailedText)
-                } else {
-                    fileLauncher.save(SettingsConfigTransfer.exportFileName(), content)
+                SettingsConfigTransfer.startExport(includeSensitiveData, sections, extensionIds) { content ->
+                    if (content == null) {
+                        NuvioToastController.show(exportFailedText)
+                    } else {
+                        fileLauncher.save(SettingsConfigTransfer.exportFileName(), content)
+                    }
                 }
             },
         )
+    }
+
+    val backupProgress by BackupProgressRepository.state.collectAsStateWithLifecycle()
+    backupProgress?.let { progress ->
+        BackupProgressSheet(state = progress, onCancel = SettingsConfigTransfer::cancelBackup)
     }
 
     pendingImport?.let { config ->

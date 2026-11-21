@@ -522,6 +522,8 @@
     <string name="detail_trailers_title">Bandes-annonces</string>
     <string name="downloads_empty_episodes">Aucun épisode terminé</string>
     <string name="downloads_empty_title">Aucun téléchargement</string>
+    <string name="downloads_empty_message">Les films et épisodes téléchargés apparaissent ici et se lisent sans connexion.</string>
+    <string name="downloads_empty_episodes_message">Les épisodes encore en cours de téléchargement apparaîtront une fois terminés.</string>
     <string name="downloads_episode_count">%1$d épisode(s) téléchargé(s)</string>
     <string name="downloads_open_directory">Ouvrir le dossier des téléchargements</string>
     <string name="downloads_open_directory_failed">Impossible d’ouvrir le dossier des téléchargements</string>

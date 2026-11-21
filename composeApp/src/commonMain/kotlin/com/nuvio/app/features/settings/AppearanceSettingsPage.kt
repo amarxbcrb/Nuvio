@@ -1,6 +1,5 @@
 package com.nuvio.app.features.settings
 
-import nuvio.composeapp.generated.resources.settings_interface_style_glass_unsupported
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +14,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import com.nuvio.app.core.ui.nuvio
-import nuvio.composeapp.generated.resources.settings_interface_style
-import nuvio.composeapp.generated.resources.settings_interface_style_glass
-import nuvio.composeapp.generated.resources.settings_interface_style_glass_hint
-import nuvio.composeapp.generated.resources.settings_interface_style_amoled
-import nuvio.composeapp.generated.resources.settings_interface_style_amoled_hint
 import com.nuvio.app.core.ui.LocalNuvioTabletNavLayout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -54,6 +48,11 @@ import com.nuvio.app.core.ui.dismissNuvioBottomSheet
 import com.nuvio.app.core.ui.labelRes
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.appearance_style_section
+import nuvio.composeapp.generated.resources.appearance_accent_section
+import nuvio.composeapp.generated.resources.appearance_home_section
+import nuvio.composeapp.generated.resources.appearance_catalog_underline
+import nuvio.composeapp.generated.resources.appearance_catalog_underline_description
 import nuvio.composeapp.generated.resources.cd_selected
 import nuvio.composeapp.generated.resources.collections_header
 import nuvio.composeapp.generated.resources.compose_settings_page_continue_watching
@@ -74,19 +73,11 @@ import nuvio.composeapp.generated.resources.settings_appearance_nav_bar_style
 import nuvio.composeapp.generated.resources.settings_nav_bar_glow_on
 import nuvio.composeapp.generated.resources.settings_nav_bar_glow_off
 import nuvio.composeapp.generated.resources.settings_nav_bar_summary
-import nuvio.composeapp.generated.resources.settings_appearance_amoled_black
-import nuvio.composeapp.generated.resources.settings_appearance_amoled_description
-import nuvio.composeapp.generated.resources.settings_appearance_dynamic_artwork_background
-import nuvio.composeapp.generated.resources.settings_appearance_dynamic_artwork_background_description
-import nuvio.composeapp.generated.resources.settings_appearance_catalog_accent
-import nuvio.composeapp.generated.resources.settings_appearance_catalog_accent_description
 import nuvio.composeapp.generated.resources.settings_appearance_continue_watching_description
 import nuvio.composeapp.generated.resources.settings_appearance_poster_customization_description
 import nuvio.composeapp.generated.resources.settings_appearance_section_detail_page
 import nuvio.composeapp.generated.resources.settings_appearance_section_display
-import nuvio.composeapp.generated.resources.settings_appearance_section_home
 import nuvio.composeapp.generated.resources.settings_appearance_section_streams
-import nuvio.composeapp.generated.resources.settings_appearance_section_theme
 import nuvio.composeapp.generated.resources.settings_content_discovery_collections_description
 import nuvio.composeapp.generated.resources.settings_content_discovery_homescreen_description
 import nuvio.composeapp.generated.resources.settings_content_discovery_meta_screen_description
@@ -98,15 +89,11 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.nuvio.app.core.ui.NuvioBottomSheetDivider
 import com.nuvio.app.core.ui.glass.isLiquidGlassAvailable
-import nuvio.composeapp.generated.resources.settings_appearance_liquid_glass_effects
-import nuvio.composeapp.generated.resources.settings_appearance_liquid_glass_effects_description
 
 internal fun LazyListScope.appearanceSettingsContent(
     isTablet: Boolean,
     selectedTheme: AppTheme,
     onThemeSelected: (AppTheme) -> Unit,
-    amoledEnabled: Boolean,
-    onAmoledToggle: (Boolean) -> Unit,
     dynamicArtworkBackgroundEnabled: Boolean,
     onDynamicArtworkBackgroundToggle: (Boolean) -> Unit,
     showCatalogAccentEnabled: Boolean,
@@ -130,12 +117,26 @@ internal fun LazyListScope.appearanceSettingsContent(
     onPosterCustomizationClick: () -> Unit,
 ) {
     item {
+        val liquidGlassEffectsEnabled by ThemeSettingsRepository.liquidGlassEffectsEnabled.collectAsStateWithLifecycle()
         SettingsSection(
-            title = stringResource(Res.string.settings_appearance_section_theme),
+            title = stringResource(Res.string.appearance_style_section),
+            isTablet = isTablet,
+        ) {
+            AppearanceStyleCards(
+                // Phones that cannot draw glass always sit on the opaque side.
+                glass = liquidGlassEffectsEnabled && isLiquidGlassAvailable(),
+                glassAvailable = isLiquidGlassAvailable(),
+                onSelect = ThemeSettingsRepository::setLiquidGlassEffectsEnabled,
+            )
+        }
+    }
+    item {
+        SettingsSection(
+            title = stringResource(Res.string.appearance_accent_section),
             isTablet = isTablet,
         ) {
             SettingsGroup(isTablet = isTablet) {
-                AppearanceThemeSelector(
+                AccentSwatchRow(
                     isTablet = isTablet,
                     selectedTheme = selectedTheme,
                     onThemeSelected = onThemeSelected,
@@ -153,7 +154,6 @@ internal fun LazyListScope.appearanceSettingsContent(
         val glowEnabled by ThemeSettingsRepository.navBarGlowEnabled.collectAsStateWithLifecycle()
         val navBarPosition by ThemeSettingsRepository.navBarPosition.collectAsStateWithLifecycle()
         val navBarGlass by ThemeSettingsRepository.navBarGlass.collectAsStateWithLifecycle()
-        val liquidGlassEffectsEnabled by ThemeSettingsRepository.liquidGlassEffectsEnabled.collectAsStateWithLifecycle()
         val navBarDefaultIconColorEnabled by ThemeSettingsRepository.navBarDefaultIconColorEnabled.collectAsStateWithLifecycle()
         val navBarDefaultIconColor by ThemeSettingsRepository.navBarDefaultIconColor.collectAsStateWithLifecycle()
         // Upstream pins tablets to COMPACT because there the bar is a top rail. This fork puts
@@ -164,58 +164,15 @@ internal fun LazyListScope.appearanceSettingsContent(
             isTablet = isTablet,
         ) {
             SettingsGroup(isTablet = isTablet) {
-                InterfaceStyleChoice(
-                    // Phones that cannot draw glass are always on the AMOLED black theme's side.
-                    amoledBlack = !liquidGlassEffectsEnabled || !isLiquidGlassAvailable(),
-                    glassAvailable = isLiquidGlassAvailable(),
-                    onSelect = ThemeSettingsRepository::setInterfaceStyle,
-                )
-                SettingsGroupDivider(isTablet = isTablet)
-                SettingsSwitchRow(
-                    title = stringResource(Res.string.settings_appearance_amoled_black),
-                    description = stringResource(Res.string.settings_appearance_amoled_description),
-                    checked = amoledEnabled,
-                    isTablet = isTablet,
-                    onCheckedChange = onAmoledToggle,
-                )
-                SettingsGroupDivider(isTablet = isTablet)
-                SettingsSwitchRow(
-                    title = stringResource(Res.string.settings_appearance_dynamic_artwork_background),
-                    description = stringResource(
-                        Res.string.settings_appearance_dynamic_artwork_background_description,
-                    ),
-                    checked = dynamicArtworkBackgroundEnabled,
-                    isTablet = isTablet,
-                    onCheckedChange = onDynamicArtworkBackgroundToggle,
-                )
-                SettingsGroupDivider(isTablet = isTablet)
-                SettingsSwitchRow(
-                    title = stringResource(Res.string.settings_appearance_catalog_accent),
-                    description = stringResource(Res.string.settings_appearance_catalog_accent_description),
-                    checked = showCatalogAccentEnabled,
-                    isTablet = isTablet,
-                    onCheckedChange = onShowCatalogAccentToggle,
-                )
-                if (isLiquidGlassAvailable()) {
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = stringResource(Res.string.settings_appearance_liquid_glass_effects),
-                        description = stringResource(Res.string.settings_appearance_liquid_glass_effects_description),
-                        checked = liquidGlassEffectsEnabled,
-                        isTablet = isTablet,
-                        onCheckedChange = ThemeSettingsRepository::setLiquidGlassEffectsEnabled,
-                    )
-                }
                 if (liquidGlassNativeTabBarSupported) {
-                    SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.settings_appearance_tab_bar_behavior),
                         description = stringResource(tabBarBehavior.labelRes),
                         isTablet = isTablet,
                         onClick = { showTabBarBehaviorSheet = true },
                     )
+                    SettingsGroupDivider(isTablet = isTablet)
                 }
-                SettingsGroupDivider(isTablet = isTablet)
                 SettingsNavigationRow(
                     title = stringResource(Res.string.settings_appearance_app_icon),
                     description = stringResource(appIconState.selected.labelResource),
@@ -336,10 +293,24 @@ internal fun LazyListScope.appearanceSettingsContent(
 
     item {
         SettingsSection(
-            title = stringResource(Res.string.settings_appearance_section_home),
+            title = stringResource(Res.string.appearance_home_section),
             isTablet = isTablet,
         ) {
             SettingsGroup(isTablet = isTablet) {
+                AppearanceBackgroundChoice(
+                    isTablet = isTablet,
+                    dynamic = dynamicArtworkBackgroundEnabled,
+                    onSelect = onDynamicArtworkBackgroundToggle,
+                )
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsSwitchRow(
+                    title = stringResource(Res.string.appearance_catalog_underline),
+                    description = stringResource(Res.string.appearance_catalog_underline_description),
+                    checked = showCatalogAccentEnabled,
+                    isTablet = isTablet,
+                    onCheckedChange = onShowCatalogAccentToggle,
+                )
+                SettingsGroupDivider(isTablet = isTablet)
                 SettingsNavigationRow(
                     title = stringResource(Res.string.compose_settings_page_homescreen),
                     description = stringResource(Res.string.settings_content_discovery_homescreen_description),
@@ -540,61 +511,3 @@ private fun TabBarBehaviorBottomSheet(
     }
 }
 
-/**
- * The two themes, liquid glass or AMOLED black, one under the other. Glass is greyed out on
- * phones that cannot draw it.
- */
-@Composable
-private fun InterfaceStyleChoice(
-    amoledBlack: Boolean,
-    glassAvailable: Boolean,
-    onSelect: (amoledBlack: Boolean) -> Unit,
-) {
-    val tokens = MaterialTheme.nuvio
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = stringResource(Res.string.settings_interface_style),
-            style = MaterialTheme.typography.titleMedium,
-            color = tokens.colors.textPrimary,
-        )
-        listOf(
-            Triple(false, Res.string.settings_interface_style_glass, Res.string.settings_interface_style_glass_hint),
-            Triple(true, Res.string.settings_interface_style_amoled, Res.string.settings_interface_style_amoled_hint),
-        ).forEach { (style, title, hint) ->
-            val isSelected = style == amoledBlack
-            val enabled = style || glassAvailable
-            val shape = RoundedCornerShape(14.dp)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(shape)
-                    .background(
-                        if (isSelected) tokens.colors.accent.copy(alpha = 0.22f)
-                        else Color.White.copy(alpha = 0.05f),
-                    )
-                    .border(
-                        1.dp,
-                        if (isSelected) tokens.colors.accent.copy(alpha = 0.7f)
-                        else Color.White.copy(alpha = 0.12f),
-                        shape,
-                    )
-                    .clickable(enabled = enabled && !isSelected) { onSelect(style) }
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    text = stringResource(title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (enabled) tokens.colors.textPrimary else tokens.colors.textMuted,
-                )
-                Text(
-                    text = stringResource(if (enabled) hint else Res.string.settings_interface_style_glass_unsupported),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = tokens.colors.textMuted,
-                )
-            }
-        }
-    }
-}

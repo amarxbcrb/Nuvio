@@ -41,7 +41,7 @@ import nuvio.composeapp.generated.resources.settings_backup_part_player
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-private val BackupSection.labelRes: StringResource
+internal val BackupSection.labelRes: StringResource
     get() = when (this) {
         BackupSection.Appearance -> Res.string.settings_backup_part_appearance
         BackupSection.Player -> Res.string.settings_backup_part_player

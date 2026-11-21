@@ -258,7 +258,12 @@ fun ProfileSelectionScreen(
                 Spacer(modifier = Modifier.height(if (isTabletLayout) 28.dp else 48.dp))
 
                 val profiles = profileState.profiles
-                val items = profiles.size + if (isEditMode && profiles.size < MAX_PROFILES) 1 else 0
+                // No profile yet: "Gérer les profils" would be a dead end, so the add circle is
+                // shown directly and the manage/done toggle is hidden.
+                val hasNoProfiles = profileState.isLoaded && profiles.isEmpty()
+                LaunchedEffect(hasNoProfiles) { if (hasNoProfiles) isEditMode = false }
+                val showAddCard = (isEditMode || hasNoProfiles) && profiles.size < MAX_PROFILES
+                val items = profiles.size + if (showAddCard) 1 else 0
 
                 if (isTabletLayout) {
                     Box(
@@ -338,6 +343,7 @@ fun ProfileSelectionScreen(
                     }
                 }
 
+                if (!hasNoProfiles) {
                 Spacer(modifier = Modifier.height(if (isTabletLayout) 28.dp else 48.dp))
 
                 Box(
@@ -368,6 +374,9 @@ fun ProfileSelectionScreen(
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold,
                     )
+                }
+                } else {
+                    Spacer(modifier = Modifier.height(if (isTabletLayout) 28.dp else 48.dp))
                 }
 
                 if (onSignInWithAccount != null) {

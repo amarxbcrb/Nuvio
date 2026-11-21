@@ -98,6 +98,10 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
+import kotlinx.coroutines.yield
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.settings_backup_import_done
 import nuvio.composeapp.generated.resources.settings_backup_import_failed
@@ -137,6 +141,7 @@ internal object SettingsConfigTransfer {
         includeCredentials: Boolean,
         sections: Set<BackupSection> = BackupSection.entries.toSet(),
         extensionIds: Set<String>? = null,
+        onKeyDone: ((key: String, value: JsonElement) -> Unit)? = null,
     ): String {
         ensureRepositoriesLoaded()
         val root = buildJsonObject {
@@ -150,7 +155,10 @@ internal object SettingsConfigTransfer {
                 buildJsonObject {
                     val wanted = sections.flatMap { it.keys }.toSet()
                     fun put(key: String, value: JsonElement) {
-                        if (key in wanted) this.put(key, value)
+                        if (key in wanted) {
+                            this.put(key, value)
+                            onKeyDone?.invoke(key, value)
+                        }
                     }
                     put("theme", exportThemeSettings())
                     put("poster_card_style", exportPayload(PosterCardStyleStorage.loadPayload()))
@@ -203,18 +211,114 @@ internal object SettingsConfigTransfer {
         )
     }
 
+    private var backupJob: Job? = null
+
+    /** Stops the running export or import. Parts already imported stay imported. */
+    fun cancelBackup() {
+        backupJob?.cancel()
+    }
+
+    /**
+     * Builds the backup file off the main thread, publishing progress to [BackupProgressRepository].
+     * [onDone] gets the file content, or null on failure or cancellation.
+     */
+    fun startExport(
+        includeCredentials: Boolean,
+        sections: Set<BackupSection>,
+        extensionIds: Set<String>?,
+        onDone: (String?) -> Unit,
+    ) {
+        if (backupJob?.isActive == true) return
+        backupJob = scope.launch {
+            var cancelled = false
+            val content = try {
+                withContext(Dispatchers.Default) {
+                    ensureRepositoriesLoaded()
+                    val tracker = BackupProgressTracker(
+                        operation = BackupOperation.Export,
+                        plan = exportPlan(includeCredentials, sections, extensionIds),
+                        sink = BackupProgressRepository.mutableState,
+                    )
+                    export(includeCredentials, sections, extensionIds) { key, value ->
+                        ensureActive()
+                        tracker.keyDone(key, value.toString().length.toLong())
+                    }
+                }
+            } catch (error: CancellationException) {
+                cancelled = true
+                null
+            } catch (_: Throwable) {
+                null
+            } finally {
+                BackupProgressRepository.mutableState.value = null
+            }
+            // Cancelled by the user: no file and no failure message.
+            if (!cancelled) onDone(content)
+        }
+    }
+
+    /** Keys the export will write, in order, each weighted by how many items it holds. */
+    private fun exportPlan(
+        includeCredentials: Boolean,
+        sections: Set<BackupSection>,
+        extensionIds: Set<String>?,
+    ): List<Pair<String, Int>> {
+        val wanted = sections.flatMap { it.keys }.toSet()
+        return exportKeyOrder
+            .filter { key -> key in wanted }
+            .filter { key -> key != "live_tv" || includeCredentials }
+            .filter { key -> key != "plugins" || AppFeaturePolicy.pluginsEnabled }
+            .filter { key -> key != "cloudstream" || cloudStreamTransferEnabled }
+            .map { key ->
+                key to when (key) {
+                    "addons" -> AddonRepository.uiState.value.addons.size
+                    "plugins" -> PluginRepository.uiState.value.let { it.repositories.size + it.scrapers.size }
+                    "cloudstream" -> extensionIds?.size ?: CloudStreamRepository.uiState.value.plugins.size
+                    else -> 1
+                }.coerceAtLeast(1)
+            }
+    }
+
+    /** Same order as the `put` calls in [export]. */
+    private val exportKeyOrder = listOf(
+        "theme", "poster_card_style", "custom_poster", "card_depth_style", "player", "subtitle_auto_sync",
+        "stream_badges", "debrid", "tmdb", "mdblist", "omdb", "meta_screen", "details", "continue_watching",
+        "library_display", "home", "general", "p2p", "discord_rpc", "live_tv", "addons", "plugins",
+        "cloudstream", "collections", "search_screen",
+    )
+
+    /** Same order as the `section` calls in [importAll]. */
+    private val importKeyOrder = listOf(
+        "theme", "poster_card_style", "custom_poster", "card_depth_style", "player", "subtitle_auto_sync",
+        "stream_badges", "debrid", "tmdb", "mdblist", "omdb", "meta_screen", "details", "continue_watching",
+        "library_display", "general", "p2p", "discord_rpc", "live_tv", "addons", "plugins", "cloudstream",
+        "collections", "search_screen", "home",
+    )
+
     fun startImport(settings: JsonObject) {
         if (_isImporting.value) return
         _isImporting.value = true
-        scope.launch {
+        backupJob = scope.launch {
+            val tracker = BackupProgressTracker(
+                operation = BackupOperation.Import,
+                plan = importKeyOrder
+                    .filter { key -> settings[key] != null }
+                    .filter { key -> key != "plugins" || AppFeaturePolicy.pluginsEnabled }
+                    .filter { key -> key != "cloudstream" || cloudStreamTransferEnabled }
+                    .map { key -> key to backupItemCount(settings[key]) },
+                sink = BackupProgressRepository.mutableState,
+            )
             val failures = try {
-                importAll(settings)
+                importAll(settings, tracker)
             } catch (error: CancellationException) {
+                _isImporting.value = false
+                BackupProgressRepository.mutableState.value = null
                 throw error
             } catch (_: Throwable) {
                 -1
             } finally {
                 _isImporting.value = false
+                BackupProgressRepository.mutableState.value = null
             }
             NuvioToastController.show(
                 getString(
@@ -228,7 +332,7 @@ internal object SettingsConfigTransfer {
         }
     }
 
-    private suspend fun importAll(settings: JsonObject): Int {
+    private suspend fun importAll(settings: JsonObject, tracker: BackupProgressTracker? = null): Int {
         ensureRepositoriesLoaded()
         var failures = 0
         suspend fun section(key: String, block: suspend (JsonElement) -> Unit) {
@@ -240,6 +344,9 @@ internal object SettingsConfigTransfer {
             } catch (_: Throwable) {
                 failures += 1
             }
+            tracker?.keyDone(key, value.toString().length.toLong())
+            // Lets the progress sheet redraw between parts and the cancel button take effect.
+            yield()
         }
 
         section("theme") { value ->
