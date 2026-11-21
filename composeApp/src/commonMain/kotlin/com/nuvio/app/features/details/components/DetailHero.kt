@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
 import coil3.compose.AsyncImage
+import androidx.compose.ui.draw.drawWithContent
 import com.nuvio.app.core.ui.heroStretchHeight
 import com.nuvio.app.core.ui.heroStretchZoom
 import com.nuvio.app.features.details.MetaDetails
@@ -141,7 +142,8 @@ fun DetailHero(
                                 translationY = scrollOffset() * 0.5f
                                 scaleX = 1.08f
                                 scaleY = 1.08f
-                        },
+                        }
+                            .heroFadeOut(),
                         alignment = if (isTablet) Alignment.TopCenter else Alignment.Center,
                         contentScale = ContentScale.Crop,
                         onSuccess = { state ->
@@ -174,7 +176,8 @@ fun DetailHero(
                                 translationY = scrollOffset() * 0.5f
                                 scaleX = 1.08f
                                 scaleY = 1.08f
-                            },
+                            }
+                            .heroFadeOut(),
                         onReady = onHeroTrailerReady,
                         onEnded = onHeroTrailerEnded,
                         onError = onHeroTrailerError,
@@ -290,3 +293,26 @@ private fun detailHeroHeight(maxWidth: Dp, isTablet: Boolean): Dp =
     } else {
         (maxWidth * 0.42f).coerceIn(300.dp, 420.dp)
     }
+
+
+/**
+ * The artwork fades out (alpha mask) over its lower part, as on the links screen, so it melts into
+ * what is behind it (blurred artwork in the Liquid glass style, the page colour otherwise) instead
+ * of ending on a visible line.
+ */
+private fun Modifier.heroFadeOut(): Modifier =
+    graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0.0f to Color.Black,
+                        0.55f to Color.Black,
+                        0.82f to Color.Black.copy(alpha = 0.45f),
+                        1.0f to Color.Transparent,
+                    ),
+                ),
+                blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+            )
+        }

@@ -59,6 +59,9 @@ import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.themePalette
 import com.nuvio.app.core.ui.appIconPainter
 import nuvio.composeapp.generated.resources.Res
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.Brush
+import com.nuvio.app.features.streams.linksSurface
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -724,7 +727,8 @@ internal fun DetailIconAction(
     drawable: DrawableResource? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val glassActive = !active && isAmbientLiquidGlassActive()
+    // Same surface as the links screen cards and pills (dark frosted glass, or black with a
+    // hairline in the opaque style), so the two screens look alike.
     Surface(
         modifier = modifier
             .nuvioPressScale(pressedScale = 0.88f)
@@ -733,31 +737,15 @@ internal fun DetailIconAction(
                 scaleX = 0.86f + (0.14f * progress)
                 scaleY = 0.86f + (0.14f * progress)
             }
-            .then(
-                if (glassActive) {
-                    Modifier.ambientLiquidGlass(
-                        shape = CircleShape,
-                        tint = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-                        fallback = Color.Transparent,
-                    )
-                } else {
-                    Modifier
-                },
-            ),
+            .then(if (active) Modifier else Modifier.linksSurface(CircleShape)),
         shape = CircleShape,
-        color = if (active) {
-            MaterialTheme.colorScheme.onBackground
-        } else if (glassActive) {
-            Color.Transparent
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
+        color = if (active) MaterialTheme.colorScheme.onBackground else Color.Transparent,
         contentColor = if (active) {
             MaterialTheme.colorScheme.background
         } else {
             MaterialTheme.colorScheme.onSurface
         },
-        tonalElevation = 6.dp,
+        tonalElevation = 0.dp,
     ) {
         Box(
             modifier = Modifier
@@ -807,9 +795,16 @@ private fun PlayButton(
                 .height(buttonHeight)
                 .then(
                     if (playEnabled) {
+                        // Same as « Reprendre » on the links screen: light at the top, thin light edge.
+                        val accent = MaterialTheme.nuvio.colors.accent
                         Modifier
                             .clip(playShape)
-                            .background(MaterialTheme.themePalette.accentBrush())
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.18f).compositeOver(accent), accent),
+                                ),
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.22f), playShape)
                     } else {
                         Modifier
                     },
