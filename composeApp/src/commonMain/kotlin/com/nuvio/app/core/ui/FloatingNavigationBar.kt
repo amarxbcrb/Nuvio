@@ -18,6 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -567,6 +571,26 @@ internal fun FloatingNavigationBar(
                             defaultIconColorOverride = defaultIconColorOverride,
                         )
                     }
+                }
+            }
+        }
+        // The bar follows touch and drag gestures only: on TV each tab also gets a focusable
+        // zone, so the remote can move between the tabs and open them.
+        if (DeviceForm.isTv) {
+            Row(
+                modifier = Modifier
+                    .widthIn(max = if (inlineLabels) inlineMaxWidth else 400.dp)
+                    .fillMaxWidth()
+                    .height(trackHeight),
+            ) {
+                items.forEach { item ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(percent = 50))
+                            .clickable(onClickLabel = item.label) { item.onClick() },
+                    )
                 }
             }
         }

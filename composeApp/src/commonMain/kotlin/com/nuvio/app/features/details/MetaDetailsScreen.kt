@@ -364,7 +364,12 @@ fun MetaDetailsScreen(
         }
     }
 
-    LaunchedEffect(displayedMeta?.id, shouldShowComments, deferredMetaWorkAllowed) {
+    // Language and episode chosen above the comments.
+    val commentsFilter by MetaCommentsRepository.filter.collectAsStateWithLifecycle()
+    LaunchedEffect(displayedMeta?.id) {
+        displayedMeta?.id?.let(MetaCommentsRepository::onTitleShown)
+    }
+    LaunchedEffect(displayedMeta?.id, shouldShowComments, deferredMetaWorkAllowed, commentsFilter) {
         if (displayedMeta == null || !shouldShowComments) {
             comments = emptyList()
             commentsCurrentPage = 0
@@ -2586,8 +2591,12 @@ private fun ConfiguredMetaSections(
                 )
             }
             MetaScreenSectionKey.COMMENTS -> {
-                if (shouldShowComments && (isCommentsLoading || comments.isNotEmpty() || !commentsError.isNullOrBlank())) {
+                // Shown even when empty, so another language or episode can be chosen.
+                if (shouldShowComments) {
                     DetailCommentsSection(
+                        episodes = meta.videos.takeIf {
+                            meta.type.lowercase().let { type -> type == "series" || type == "show" || type == "tv" }
+                        }.orEmpty(),
                         comments = comments,
                         isLoading = isCommentsLoading,
                         isLoadingMore = isCommentsLoadingMore,

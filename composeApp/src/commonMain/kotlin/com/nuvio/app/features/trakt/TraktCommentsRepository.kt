@@ -38,10 +38,15 @@ object TraktCommentsRepository {
         meta: MetaDetails,
         page: Int = 1,
         forceRefresh: Boolean = false,
+        /** Season and episode: the comments of that episode only (series). */
+        episode: Pair<Int, Int>? = null,
     ): TraktCommentsPage {
         val target = resolveCommentsTarget(meta)
             ?: return TraktCommentsPage(emptyList(), page, 0, 0)
-        val cacheKey = "${target.type.apiValue}|${target.pathId}"
+        val episodePath = episode?.takeIf { target.type == TraktCommentsType.SHOW }
+            ?.let { (season, number) -> "/seasons/$season/episodes/$number" }
+            .orEmpty()
+        val cacheKey = "${target.type.apiValue}|${target.pathId}$episodePath"
 
         if (forceRefresh) {
             cacheMutex.withLock { cache.remove(cacheKey) }
@@ -72,7 +77,7 @@ object TraktCommentsRepository {
             TraktCommentsType.MOVIE -> "movies"
             TraktCommentsType.SHOW -> "shows"
         }
-        val url = "https://api.trakt.tv/$endpoint/${target.pathId}/comments/$COMMENTS_SORT?page=$page&limit=$COMMENTS_LIMIT"
+        val url = "https://api.trakt.tv/$endpoint/${target.pathId}$episodePath/comments/$COMMENTS_SORT?page=$page&limit=$COMMENTS_LIMIT"
 
         val response = try {
             httpRequestRaw(

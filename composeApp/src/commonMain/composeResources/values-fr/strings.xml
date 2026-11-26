@@ -2077,4 +2077,7 @@
     <string name="settings_liquid_glass_tab_player_cards">Cartes</string>
     <string name="settings_liquid_glass_tab_menu">Menu</string>
     <string name="settings_liquid_glass_tab_profile">Profil</string>
+    <string name="detail_comments_all_languages">Toutes les langues</string>
+    <string name="detail_comments_whole_series">Toute la série</string>
+    <string name="detail_comments_episode">Épisode</string>
 </resources>

@@ -220,6 +220,11 @@ open class MainActivity : AppCompatActivity() {
 
     private fun showContent() {
         handleIncomingAppIntent(intent)
+        // Android TV / Google TV: remote-control layout (focus outline, Settings in the bar).
+        com.nuvio.app.core.ui.DeviceForm.isTv =
+            (getSystemService(UI_MODE_SERVICE) as? android.app.UiModeManager)?.currentModeType ==
+                Configuration.UI_MODE_TYPE_TELEVISION ||
+                packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
         setContent {
             LicenceGate {
                 val sheetBackdropSource = rememberNuvioBackdrop()

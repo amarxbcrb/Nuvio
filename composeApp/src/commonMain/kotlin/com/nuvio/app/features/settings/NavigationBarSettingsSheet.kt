@@ -8,6 +8,11 @@ import androidx.compose.ui.draw.drawBehind
 import com.nuvio.app.core.ui.glass.GlassSurface
 import com.nuvio.app.core.ui.glass.LiquidGlassMaterial
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -991,30 +996,135 @@ private fun GlassSurfacePreview(surface: GlassSurface, label: String) {
                 }
             }
         }
-        val shape = RoundedCornerShape(24.dp)
-        Column(
-            Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 28.dp)
-                .fillMaxWidth()
-                .liquidGlassSurface(
-                    backdrop = backdrop,
-                    shape = shape,
-                    tint = Color(0xFF0E0E12).copy(alpha = 0.5f),
-                    fallback = Color(0xFF16161A),
-                    blurRadius = 16.dp,
-                    refractionHeight = 10.dp,
-                    refractionAmount = 16.dp,
-                    surface = surface,
+        // A small model of the element itself, drawn with its glass settings.
+        fun Modifier.glass(shape: androidx.compose.ui.graphics.Shape): Modifier = liquidGlassSurface(
+            backdrop = backdrop,
+            shape = shape,
+            tint = Color(0xFF0E0E12).copy(alpha = 0.5f),
+            fallback = Color(0xFF16161A),
+            blurRadius = 16.dp,
+            refractionHeight = 10.dp,
+            refractionAmount = 16.dp,
+            surface = surface,
+        )
+        val white = Color.White
+        val muted = Color.White.copy(alpha = 0.65f)
+        fun line(width: androidx.compose.ui.unit.Dp, alpha: Float = 0.55f) =
+            Modifier.width(width).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = alpha))
+        when (surface) {
+            GlassSurface.RESUME_CARD -> Row(
+                Modifier.align(Alignment.BottomCenter).padding(12.dp).fillMaxWidth()
+                    .glass(RoundedCornerShape(20.dp)).padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(Modifier.width(34.dp).height(48.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2F4F9E)))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(label, style = MaterialTheme.typography.labelLarge, color = white, fontWeight = FontWeight.SemiBold)
+                    Box(line(110.dp))
+                }
+                Box(Modifier.size(36.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.nuvio.colors.accent))
+            }
+            GlassSurface.DETAILS -> Row(
+                Modifier.align(Alignment.Center).padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = white,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.glass(RoundedCornerShape(percent = 50)).padding(horizontal = 26.dp, vertical = 12.dp),
                 )
-                .padding(horizontal = 18.dp, vertical = 14.dp),
-        ) {
-            Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(
-                stringResource(Res.string.settings_liquid_glass_preview_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.72f),
-            )
+                repeat(2) { Box(Modifier.size(44.dp).glass(androidx.compose.foundation.shape.CircleShape)) }
+            }
+            GlassSurface.SOURCES -> Row(
+                Modifier.align(Alignment.Center).padding(horizontal = 16.dp).fillMaxWidth()
+                    .glass(RoundedCornerShape(percent = 50)).padding(5.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                listOf("Français", "Qualité", "Source").forEachIndexed { index, text ->
+                    Text(
+                        "$text ⌄",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = white,
+                        modifier = Modifier.weight(1f)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(if (index == 0) Color.White.copy(alpha = 0.16f) else Color.Transparent)
+                            .padding(vertical = 10.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                }
+            }
+            GlassSurface.PLAYER -> Row(
+                Modifier.align(Alignment.BottomCenter).padding(12.dp)
+                    .glass(RoundedCornerShape(percent = 50)).padding(horizontal = 18.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                listOf(Icons.Default.Refresh, Icons.Default.PlayArrow, Icons.Default.SkipNext).forEach {
+                    Icon(it, contentDescription = null, tint = white, modifier = Modifier.size(22.dp))
+                }
+            }
+            GlassSurface.PLAYER_PANELS -> Column(
+                Modifier.align(Alignment.CenterEnd).padding(8.dp).width(150.dp).fillMaxHeight()
+                    .glass(RoundedCornerShape(18.dp)).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(label, style = MaterialTheme.typography.labelLarge, color = white, fontWeight = FontWeight.Bold)
+                repeat(3) { Box(Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(8.dp)).background(Color.White.copy(alpha = 0.10f))) }
+            }
+            GlassSurface.PLAYER_CARDS -> Row(
+                Modifier.align(Alignment.BottomEnd).padding(14.dp)
+                    .glass(RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(Icons.Default.SkipNext, contentDescription = null, tint = white, modifier = Modifier.size(18.dp))
+                Text(label, style = MaterialTheme.typography.labelLarge, color = white)
+            }
+            GlassSurface.CONTEXT_MENU -> Column(
+                Modifier.align(Alignment.Center).width(190.dp).glass(RoundedCornerShape(18.dp)),
+            ) {
+                repeat(3) { index ->
+                    if (index > 0) Box(Modifier.fillMaxWidth().height(0.5.dp).background(Color.White.copy(alpha = 0.12f)))
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 9.dp)) {
+                        Box(line(if (index == 0) 100.dp else 80.dp, 0.7f))
+                    }
+                }
+            }
+            GlassSurface.PROFILE_MENU -> Row(
+                Modifier.align(Alignment.Center).glass(RoundedCornerShape(22.dp)).padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                listOf(Color(0xFFE57373), Color(0xFF64B5F6), Color(0xFF81C784)).forEach { color ->
+                    Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(color))
+                }
+            }
+            GlassSurface.POPUPS -> Column(
+                Modifier.align(Alignment.BottomCenter).padding(horizontal = 12.dp).fillMaxWidth().height(96.dp)
+                    .glass(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)).padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(muted))
+                Text(label, style = MaterialTheme.typography.labelLarge, color = white, fontWeight = FontWeight.SemiBold)
+                Box(line(140.dp))
+            }
+            else -> Row(
+                // Home: glass cards over the page.
+                Modifier.align(Alignment.Center),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                repeat(3) {
+                    Box(
+                        Modifier.width(70.dp).height(100.dp).glass(RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        Box(line(44.dp).padding(bottom = 0.dp))
+                    }
+                }
+            }
         }
     }
 }

@@ -222,7 +222,16 @@ fun NuvioTheme(
             colorScheme = colorScheme,
             typography = NuvioTypography,
         ) {
-            SkeletonAnimationProvider(content = content)
+            if (DeviceForm.isTv) {
+                // Remote control: a visible outline on the focused element.
+                CompositionLocalProvider(
+                    androidx.compose.foundation.LocalIndication provides TvFocusIndication,
+                ) {
+                    SkeletonAnimationProvider(content = content)
+                }
+            } else {
+                SkeletonAnimationProvider(content = content)
+            }
         }
     }
 }

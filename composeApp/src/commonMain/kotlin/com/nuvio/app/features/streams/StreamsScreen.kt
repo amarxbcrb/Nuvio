@@ -251,10 +251,17 @@ fun StreamsScreen(
         }
     }
 
+    // The title's own backdrop (from its page) first: the one handed over at launch can be a
+    // decorated copy (rating and genres printed on it) that changes from one launch to the next.
+    val titleBackground = remember(parentMetaType, parentMetaId) {
+        com.nuvio.app.features.details.MetaDetailsRepository.peek(parentMetaType, parentMetaId)
+            ?.background?.takeIf { it.isNotBlank() }
+    }
+    val stableBackground = titleBackground ?: background
     val heroArtwork = if (isEpisode) {
-        episodeThumbnail ?: background ?: poster
+        episodeThumbnail ?: stableBackground ?: poster
     } else {
-        background ?: poster
+        stableBackground ?: poster
     }
     val isEpisodeWatched = episodeProgress?.isEffectivelyCompleted == true || watchedItemKeys(
         type = parentMetaType,
@@ -418,7 +425,7 @@ fun StreamsScreen(
                 title = title,
                 logo = logo,
                 heroArtwork = heroArtwork,
-                backdrop = background ?: poster,
+                backdrop = stableBackground ?: poster,
                 genres = remember(parentMetaType, parentMetaId) {
                     com.nuvio.app.features.details.MetaDetailsRepository.peek(parentMetaType, parentMetaId)?.genres.orEmpty()
                 },

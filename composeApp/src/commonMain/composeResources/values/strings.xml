@@ -3008,4 +3008,7 @@
     <string name="settings_liquid_glass_tab_player_cards">Cards</string>
     <string name="settings_liquid_glass_tab_menu">Menu</string>
     <string name="settings_liquid_glass_tab_profile">Profile</string>
+    <string name="detail_comments_all_languages">All languages</string>
+    <string name="detail_comments_whole_series">Whole series</string>
+    <string name="detail_comments_episode">Episode</string>
 </resources>

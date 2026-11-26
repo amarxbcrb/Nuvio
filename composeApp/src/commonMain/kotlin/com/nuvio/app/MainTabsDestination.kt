@@ -350,7 +350,9 @@ internal fun mainFloatingNavigationItems(
             ),
         )
     }
-    if (!includeSearchAndProfile) {
+    // On TV, like on phones, the bar opens Settings (the profile is chosen from there): the
+    // profile switcher popup is made for touch.
+    if (!includeSearchAndProfile || com.nuvio.app.core.ui.DeviceForm.isTv) {
         add(
             FloatingNavigationItem(
                 selected = highlightedTab == AppScreenTab.Settings,
@@ -359,9 +361,8 @@ internal fun mainFloatingNavigationItems(
                 label = stringResource(Res.string.compose_nav_settings),
             ),
         )
-        return@buildList
-    }
-    add(
+        if (!includeSearchAndProfile) return@buildList
+    } else add(
         FloatingNavigationItem(
             selected = highlightedTab == AppScreenTab.Settings,
             onClick = { onTabSelected(AppScreenTab.Settings) },
@@ -420,7 +421,12 @@ internal fun MainClassicNavigationBar(
                 contentDescription = stringResource(Res.string.compose_nav_live_tv),
             )
         }
-        NavItem(
+        if (com.nuvio.app.core.ui.DeviceForm.isTv) NavItem(
+            selected = highlightedTab == AppScreenTab.Settings,
+            onClick = { onTabSelected(AppScreenTab.Settings) },
+            icon = Icons.Filled.Settings,
+            contentDescription = stringResource(Res.string.compose_nav_settings),
+        ) else NavItem(
             selected = highlightedTab == AppScreenTab.Settings,
             onClick = { onTabSelected(AppScreenTab.Settings) },
         ) {

@@ -24,6 +24,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.clip
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +47,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun DetailCommentsSection(
     comments: List<TraktCommentReview>,
+    /** Episodes of a series, to read the comments of one of them; empty for a film. */
+    episodes: List<com.nuvio.app.features.details.MetaVideo> = emptyList(),
     isLoading: Boolean,
     isLoadingMore: Boolean,
     canLoadMore: Boolean,
@@ -75,6 +80,8 @@ fun DetailCommentsSection(
             CommentsHeader()
             Spacer(modifier = Modifier.height(12.dp))
         }
+        CommentsFilterRow(episodes = episodes, horizontalScrollPadding = horizontalScrollPadding)
+        Spacer(modifier = Modifier.height(12.dp))
 
         when {
             isLoading -> {
@@ -291,5 +298,73 @@ private fun LoadingCommentCard() {
                 SkeletonBlock(width = 64.dp, height = 10.dp)
             }
         }
+    }
+}
+
+
+/**
+ * Above the comments: the language (TMDB reviews are filed by language; Trakt comments count as
+ * English) and, for a series, « Toute la série » or one episode.
+ */
+@Composable
+private fun CommentsFilterRow(
+    episodes: List<com.nuvio.app.features.details.MetaVideo>,
+    horizontalScrollPadding: Dp,
+) {
+    val filter by com.nuvio.app.features.details.MetaCommentsRepository.filter.collectAsStateWithLifecycle()
+    val tokens = MaterialTheme.nuvio
+    val allLabel = stringResource(Res.string.detail_comments_all_languages)
+    val chips = listOf<Pair<String?, String>>(null to allLabel) +
+        com.nuvio.app.features.details.MetaCommentsRepository.languages.map { (code, _) ->
+            code to com.nuvio.app.features.streams.localizedLanguageName(code)
+        }
+    LazyRow(
+        modifier = Modifier
+            .nuvioHorizontalScrollBleed(horizontalScrollPadding)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = horizontalScrollPadding),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(chips.size) { index ->
+            val (code, label) = chips[index]
+            val selected = filter.language == code
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (selected) Color.Black else tokens.colors.textPrimary,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(if (selected) Color(0xFFF2F2F7) else Color.White.copy(alpha = 0.08f))
+                    .clickable { com.nuvio.app.features.details.MetaCommentsRepository.setLanguage(code) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
+    }
+    val numbered = episodes.filter { it.season != null && it.episode != null && (it.season ?: 0) > 0 }
+        .sortedWith(compareBy({ it.season }, { it.episode }))
+    if (numbered.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(8.dp))
+        val wholeSeries = stringResource(Res.string.detail_comments_whole_series)
+        val options = listOf(com.nuvio.app.core.ui.NuvioSelectOption("", wholeSeries)) + numbered.map { video ->
+            com.nuvio.app.core.ui.NuvioSelectOption(
+                "${video.season}:${video.episode}",
+                "S${video.season} E${video.episode} · ${video.title}",
+            )
+        }
+        val selectedKey = filter.episode?.let { (season, number) -> "$season:$number" }.orEmpty()
+        com.nuvio.app.core.ui.NuvioDropdownField(
+            label = stringResource(Res.string.detail_comments_episode),
+            valueLabel = options.firstOrNull { it.key == selectedKey }?.label ?: wholeSeries,
+            options = options,
+            selectedKeys = setOf(selectedKey),
+            onSelect = { option ->
+                val parts = option.key.split(":")
+                com.nuvio.app.features.details.MetaCommentsRepository.setEpisode(
+                    if (parts.size == 2) parts[0].toInt() to parts[1].toInt() else null,
+                )
+            },
+        )
     }
 }

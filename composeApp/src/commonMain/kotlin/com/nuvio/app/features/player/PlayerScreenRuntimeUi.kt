@@ -218,6 +218,10 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         derivedStateOf { !isAnyOverlayVisible && !playerControlsLocked && !isMiniPresentation }
     }
     val onKeyboardShortcut = rememberUpdatedState(::handleKeyboardShortcut)
+    // On TV, once the controls show, the remote's arrows go to the buttons instead of seeking.
+    val remoteNavigates = remember {
+        derivedStateOf { com.nuvio.app.core.ui.DeviceForm.isTv && controlsVisible }
+    }
     LaunchedEffect(keyboardShortcutsEnabled.value) {
         if (keyboardShortcutsEnabled.value) {
             runCatching { keyboardFocusRequester.requestFocus() }
@@ -234,6 +238,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
                 focusRequester = keyboardFocusRequester,
                 enabledState = keyboardShortcutsEnabled,
                 onShortcutState = onKeyboardShortcut,
+                remoteNavigatesState = remoteNavigates,
             )
             .playerSurfaceTapGestures(
                 layoutSize = layoutSize,

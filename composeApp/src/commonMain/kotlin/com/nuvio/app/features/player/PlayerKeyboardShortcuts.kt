@@ -22,6 +22,8 @@ enum class PlayerKeyboardShortcut(val wireCode: String) {
     SeekBackward("seek_backward"),
     SeekForward("seek_forward"),
     Exit("exit"),
+    /** TV remote: OK, up or down while the controls are hidden shows them. */
+    ShowControls("show_controls"),
     ;
 
     companion object {
@@ -45,11 +47,14 @@ internal fun Modifier.playerKeyboardShortcuts(
     focusRequester: FocusRequester,
     enabledState: State<Boolean>,
     onShortcutState: State<(PlayerKeyboardShortcut) -> Unit>,
+    /** TV with the controls shown: the arrows and OK move between and press the buttons. */
+    remoteNavigatesState: State<Boolean> = androidx.compose.runtime.mutableStateOf(false),
 ): Modifier =
     focusRequester(focusRequester)
         .focusable()
         .onPreviewKeyEvent { event ->
             if (event.type != KeyEventType.KeyDown || !enabledState.value) return@onPreviewKeyEvent false
+            if (remoteNavigatesState.value && event.key in remoteNavigationKeys) return@onPreviewKeyEvent false
             val shortcut = event.key.toPlayerKeyboardShortcut() ?: return@onPreviewKeyEvent false
             onShortcutState.value(shortcut)
             true
@@ -60,5 +65,12 @@ private fun Key.toPlayerKeyboardShortcut(): PlayerKeyboardShortcut? = when (this
     Key.DirectionLeft, Key.MediaRewind -> PlayerKeyboardShortcut.SeekBackward
     Key.DirectionRight, Key.MediaFastForward -> PlayerKeyboardShortcut.SeekForward
     Key.Escape -> PlayerKeyboardShortcut.Exit
+    Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.DirectionUp, Key.DirectionDown, Key.Menu ->
+        PlayerKeyboardShortcut.ShowControls
     else -> null
 }
+
+private val remoteNavigationKeys = setOf(
+    Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown,
+    Key.DirectionCenter, Key.Enter, Key.NumPadEnter,
+)

@@ -64,6 +64,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -784,11 +785,21 @@ private fun LinkRow(
     val tokens = MaterialTheme.nuvio
     val info = remember(stream) { StreamLanguageDetector.detect(stream, cloudStreamProviderLanguages()[stream.addonId]) }
     val resolution = remember(stream) { StreamQualityDetector.detect(stream).resolution }
-    val techBadges = remember(stream) {
+    val namedBadges = remember(stream) {
         StreamTechBadges.detect(stream).filter {
             it.kind == TechBadgeKind.Hdr || it.kind == TechBadgeKind.Audio || it.kind == TechBadgeKind.Release
         }
     }
+    // When the name says nothing about picture or sound, the HLS playlist is read (HDR, Dolby
+    // Vision, Atmos, DD+).
+    var playlistBadges by remember(stream.url) { mutableStateOf<List<TechBadge>>(emptyList()) }
+    LaunchedEffect(stream.url) {
+        if (namedBadges.none { it.kind == TechBadgeKind.Hdr || it.kind == TechBadgeKind.Audio } && HlsTechProbe.isHls(stream)) {
+            playlistBadges = HlsTechProbe.probe(stream)
+        }
+    }
+    val techBadges = (namedBadges + playlistBadges.filter { it.kind != TechBadgeKind.Resolution })
+        .distinctBy { it.text }
     val origin = stream.sourceName?.trim()?.takeIf { it.isNotEmpty() && !it.equals(stream.addonName, ignoreCase = true) }
         ?: stream.cleanDisplayName().takeIf { !it.equals(stream.addonName, ignoreCase = true) }
         ?: stream.addonName
@@ -1082,7 +1093,7 @@ private fun PlayButton(title: String, subtitle: String, progress: Float? = null,
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
             Spacer(Modifier.width(8.dp))
             // Title and source on two tight lines, no extra height.
             Column {
