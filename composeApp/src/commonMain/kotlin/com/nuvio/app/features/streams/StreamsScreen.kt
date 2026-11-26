@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -591,13 +594,35 @@ private fun MobileStreamsLayout(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp)
+                    .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 72.dp)
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color.Black.copy(alpha = 0.72f), Color.Black.copy(alpha = 0.35f), Color.Transparent),
+                            colorStops = arrayOf(
+                                0.0f to MaterialTheme.colorScheme.background.copy(alpha = 0.96f),
+                                0.55f to MaterialTheme.colorScheme.background.copy(alpha = 0.70f),
+                                1.0f to Color.Transparent,
+                            ),
                         ),
                     ),
             )
+            // Same at the bottom behind the search field, so the list fades out under it.
+            if (showSearchField) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 96.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0.0f to Color.Transparent,
+                                    0.45f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
+                                    1.0f to MaterialTheme.colorScheme.background.copy(alpha = 0.96f),
+                                ),
+                            ),
+                        ),
+                )
+            }
 
             // Search at the bottom, within reach of the thumb.
             if (showSearchField) {
@@ -812,7 +837,7 @@ private fun LinksHero(
             } else {
                 Text(
                     text = episodeTitle ?: title,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     maxLines = 2,
@@ -820,28 +845,28 @@ private fun LinksHero(
                 )
             }
             if (imdbRating != null || genres.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                // One line that scrolls sideways, instead of three lines of chips.
+                Row(
+                    modifier = Modifier.padding(top = 2.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     imdbRating?.takeIf { it.isNotBlank() && it != "0" && it != "N/A" }?.let { rating ->
                         Text(
                             text = "IMDb ${rating.replace('.', ',')}",
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,
                             maxLines = 1,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(percent = 50))
                                 .background(Color(0xFFF5C518))
-                                .padding(horizontal = 12.dp, vertical = 5.dp),
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                         )
                     }
                     genres.take(3).forEach { genre ->
                         Text(
                             text = genre,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
                             color = Color.White,
                             maxLines = 1,
@@ -849,7 +874,7 @@ private fun LinksHero(
                                 .clip(RoundedCornerShape(percent = 50))
                                 .background(Color.Black.copy(alpha = 0.35f))
                                 .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(percent = 50))
-                                .padding(horizontal = 12.dp, vertical = 5.dp),
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                         )
                     }
                 }

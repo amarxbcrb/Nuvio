@@ -206,6 +206,7 @@ object ProfileSettingsSync {
             TrackingSettingsRepository.uiState.map { "trakt_settings" },
             TraktCommentsSettings.enabled.map { "trakt_comments" },
             EpisodeReleaseNotificationsRepository.uiState.map { "episode_release_alerts" },
+            com.nuvio.app.features.cloudstream.CloudStreamAccountSync.changes,
         )
 
         observeJob = scope.launch {
@@ -273,11 +274,15 @@ object ProfileSettingsSync {
                 notificationsSettings = NotificationsSettingsPayload(
                     episodeReleaseAlertsEnabled = EpisodeReleaseNotificationsRepository.uiState.value.isEnabled,
                 ),
+                cloudStreamSettings = com.nuvio.app.features.cloudstream.CloudStreamAccountSync.export(),
             ),
         )
     }
 
     private fun applyRemoteBlob(blob: MobileProfileSettingsBlob) {
+        // CloudStream repositories and extensions of the account (added here, never removed).
+        com.nuvio.app.features.cloudstream.CloudStreamAccountSync.apply(blob.features.cloudStreamSettings)
+
         ThemeSettingsStorage.replaceFromSyncPayload(blob.features.themeSettings)
         ThemeSettingsRepository.onProfileChanged()
 
@@ -410,6 +415,7 @@ private data class MobileProfileSettingsFeatures(
     @SerialName("trakt_settings_payload") val traktSettingsPayload: String = "",
     @SerialName("trakt_comments_settings") val traktCommentsSettings: JsonObject = JsonObject(emptyMap()),
     @SerialName("notifications_settings") val notificationsSettings: NotificationsSettingsPayload = NotificationsSettingsPayload(),
+    @SerialName("cloudstream_settings") val cloudStreamSettings: JsonObject = JsonObject(emptyMap()),
 )
 
 @Serializable

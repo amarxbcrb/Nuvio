@@ -115,7 +115,7 @@ internal fun ProfilePopupContent(
                         blurRadius = 24.dp,
                         refractionHeight = 12.dp,
                         refractionAmount = 24.dp,
-                        surface = com.nuvio.app.core.ui.glass.GlassSurface.POPUPS,
+                        surface = com.nuvio.app.core.ui.glass.GlassSurface.PROFILE_MENU,
                     )
                     .border(0.5.dp, tokens.colors.borderDefault, shape)
                     .padding(12.dp),

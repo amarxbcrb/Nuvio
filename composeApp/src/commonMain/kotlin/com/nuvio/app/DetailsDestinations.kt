@@ -90,93 +90,98 @@ internal fun DetailsDestination(
     val creatorRole = stringResource(Res.string.person_role_creator)
     val personNotFoundText = stringResource(Res.string.person_not_found)
     val castLookupScope = rememberCoroutineScope()
-    MetaDetailsScreen(
-        type = route.type,
-        id = route.id,
-        initialSeasonNumber = route.initialSeasonNumber,
-        initialEpisodeNumber = route.initialEpisodeNumber,
-        onBack = onBack,
-        onPlay = onPlay,
-        onPlayManually = onPlayManually,
-        onDownload = onDownload,
-        onPlayExternally = onPlayExternally,
-        onPlayFromStart = onPlayFromStart,
-        onOpenMeta = onOpenMeta,
-        onOpenMoreLikeThis = { meta ->
-            val source = meta.moreLikeThisSource
-            if (source != null) {
-                val launchId = CatalogLaunchStore.put(
-                    CatalogLaunch(
-                        title = moreLikeThisTitle,
-                        subtitle = meta.name,
-                        target = CatalogTarget.MoreLikeThis(
-                            itemId = meta.id,
-                            itemType = meta.type,
-                            source = source,
+    // The title page is the « Fiche détail » tab of the Liquid glass settings.
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.DETAILS,
+    ) {
+        MetaDetailsScreen(
+            type = route.type,
+            id = route.id,
+            initialSeasonNumber = route.initialSeasonNumber,
+            initialEpisodeNumber = route.initialEpisodeNumber,
+            onBack = onBack,
+            onPlay = onPlay,
+            onPlayManually = onPlayManually,
+            onDownload = onDownload,
+            onPlayExternally = onPlayExternally,
+            onPlayFromStart = onPlayFromStart,
+            onOpenMeta = onOpenMeta,
+            onOpenMoreLikeThis = { meta ->
+                val source = meta.moreLikeThisSource
+                if (source != null) {
+                    val launchId = CatalogLaunchStore.put(
+                        CatalogLaunch(
+                            title = moreLikeThisTitle,
+                            subtitle = meta.name,
+                            target = CatalogTarget.MoreLikeThis(
+                                itemId = meta.id,
+                                itemType = meta.type,
+                                source = source,
+                            ),
                         ),
-                    ),
-                )
-                navController.navigate(
-                    CatalogRoute(
-                        launchId = launchId,
-                        title = moreLikeThisTitle,
-                        subtitle = meta.name,
-                    ),
-                )
-            }
-        },
-        onCastClick = { person, avatarTransitionKey ->
-            val preferCrew = person.role?.let {
-                it.equals("Director", ignoreCase = true) ||
-                    it.equals(directorRole, ignoreCase = true) ||
-                    it.equals("Writer", ignoreCase = true) ||
-                    it.equals(writerRole, ignoreCase = true) ||
-                    it.equals("Creator", ignoreCase = true) ||
-                    it.equals(creatorRole, ignoreCase = true)
-            } ?: false
-            fun openPerson(tmdbId: Int, transitionKey: String?) {
-                navController.navigate(
-                    PersonDetailRoute(
-                        personId = tmdbId,
-                        personName = person.name,
-                        personPhoto = person.photo,
-                        castAvatarTransitionKey = transitionKey,
-                        preferCrew = preferCrew,
-                    ),
-                )
-            }
-            val tmdbId = person.tmdbId
-            if (tmdbId != null && tmdbId > 0) {
-                openPerson(tmdbId, avatarTransitionKey)
-            } else {
-                // Cast from an addon without TMDB ids: find the person by name, then show their titles.
-                castLookupScope.launch {
-                    val foundId = TmdbMetadataService.searchPersonId(person.name, preferActing = !preferCrew)
-                    if (foundId != null) {
-                        openPerson(foundId, null)
-                    } else {
-                        NuvioToastController.show(personNotFoundText)
+                    )
+                    navController.navigate(
+                        CatalogRoute(
+                            launchId = launchId,
+                            title = moreLikeThisTitle,
+                            subtitle = meta.name,
+                        ),
+                    )
+                }
+            },
+            onCastClick = { person, avatarTransitionKey ->
+                val preferCrew = person.role?.let {
+                    it.equals("Director", ignoreCase = true) ||
+                        it.equals(directorRole, ignoreCase = true) ||
+                        it.equals("Writer", ignoreCase = true) ||
+                        it.equals(writerRole, ignoreCase = true) ||
+                        it.equals("Creator", ignoreCase = true) ||
+                        it.equals(creatorRole, ignoreCase = true)
+                } ?: false
+                fun openPerson(tmdbId: Int, transitionKey: String?) {
+                    navController.navigate(
+                        PersonDetailRoute(
+                            personId = tmdbId,
+                            personName = person.name,
+                            personPhoto = person.photo,
+                            castAvatarTransitionKey = transitionKey,
+                            preferCrew = preferCrew,
+                        ),
+                    )
+                }
+                val tmdbId = person.tmdbId
+                if (tmdbId != null && tmdbId > 0) {
+                    openPerson(tmdbId, avatarTransitionKey)
+                } else {
+                    // Cast from an addon without TMDB ids: find the person by name, then show their titles.
+                    castLookupScope.launch {
+                        val foundId = TmdbMetadataService.searchPersonId(person.name, preferActing = !preferCrew)
+                        if (foundId != null) {
+                            openPerson(foundId, null)
+                        } else {
+                            NuvioToastController.show(personNotFoundText)
+                        }
                     }
                 }
-            }
-        },
-        onCompanyClick = { company, entityKind ->
-            val tmdbId = company.tmdbId
-            if (tmdbId != null && tmdbId > 0) {
-                navController.navigate(
-                    EntityBrowseRoute(
-                        entityKind = entityKind,
-                        entityId = tmdbId,
-                        entityName = company.name,
-                        sourceType = route.type,
-                    ),
-                )
-            }
-        },
-        sharedTransitionScope = sharedTransitionScope,
-        animatedVisibilityScope = animatedVisibilityScope,
-        modifier = Modifier.fillMaxSize(),
-    )
+            },
+            onCompanyClick = { company, entityKind ->
+                val tmdbId = company.tmdbId
+                if (tmdbId != null && tmdbId > 0) {
+                    navController.navigate(
+                        EntityBrowseRoute(
+                            entityKind = entityKind,
+                            entityId = tmdbId,
+                            entityName = company.name,
+                            sourceType = route.type,
+                        ),
+                    )
+                }
+            },
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)

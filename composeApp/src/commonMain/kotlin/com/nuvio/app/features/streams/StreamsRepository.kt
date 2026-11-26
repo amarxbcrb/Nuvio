@@ -609,6 +609,27 @@ object StreamsRepository {
                 updateAutoPlayAfterStreamsChanged()
             }
 
+            // Links found so far by a source that is still searching. Only shown: auto-play waits for
+            // the final list, and a source that already finished is never overwritten.
+            fun publishPartialAddonGroup(group: AddonStreamGroup) {
+                _uiState.update { current ->
+                    val existing = current.groups.firstOrNull { it.addonId == group.addonId }
+                    if (existing == null || !existing.isLoading) return@update current
+                    val updated = StreamAutoPlaySelector.orderAddonStreams(
+                        groups = current.groups.map { currentGroup ->
+                            if (currentGroup.addonId == group.addonId) group.copy(isLoading = true) else currentGroup
+                        },
+                        installedOrder = installedAddonOrder,
+                        preferredGroupIds = preferredGroupIds,
+                    )
+                    current.copy(
+                        groups = updated,
+                        isAnyLoading = true,
+                        emptyStateReason = updated.toEmptyStateReason(true),
+                    )
+                }
+            }
+
             fun publishAddonGroupAfterCacheCheck(group: AddonStreamGroup) {
                 if (group.addonId !in installedAddonIds || group.streams.isEmpty()) {
                     publishAddonGroup(presentStreamGroup(group))
@@ -773,6 +794,9 @@ object StreamsRepository {
                         resolveCloudStreamProviderStreams(
                             providerGroup = providerGroup,
                             request = cloudStreamSearchRequest,
+                            // Links appear as soon as the extension finds them; the source stays
+                            // « loading » and the final list replaces them when it is done.
+                            onPartial = { partial -> publishPartialAddonGroup(presentStreamGroup(partial)) },
                         )
                     }
                     StreamSourceStats.record(group.addonId, hadLinks = group.streams.isNotEmpty())
@@ -1079,7 +1103,7 @@ object StreamsRepository {
 }
 
 private const val CLOUDSTREAM_STREAM_PROVIDER_CONCURRENCY = 18
-private const val REMEMBERED_SOURCE_WAIT_MS = 8_000L
+private const val REMEMBERED_SOURCE_WAIT_MS = 15_000L
 
 /** How long the automatic start waits for a favorite source still searching before taking any source; a favorite that answers with no link is skipped at once. */
-private const val FAVORITE_WAIT_MS = 8_000L
+private const val FAVORITE_WAIT_MS = 15_000L

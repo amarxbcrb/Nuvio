@@ -114,6 +114,7 @@ fun NextEpisodeCard(
                 .graphicsLayer { translationX = animatedOffsetX }
                 .clip(shape)
                 .ambientLiquidGlass(
+                    surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_CARDS,
                     shape = shape,
                     tint = Color(0xFF191919).copy(alpha = 0.64f),
                     fallback = Color(0xFF191919).copy(alpha = 0.89f),

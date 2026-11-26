@@ -512,7 +512,7 @@
     <string name="detail_comments_badge_rating">%1$d/10</string>
     <string name="detail_comments_badge_review">Avis</string>
     <string name="detail_comments_badge_spoiler">Spoiler</string>
-    <string name="detail_comments_empty">Aucun avis Trakt pour l’instant.</string>
+    <string name="detail_comments_empty">Aucun avis pour l’instant.</string>
     <string name="detail_comments_likes">%1$d j’aime</string>
     <string name="detail_comments_spoiler_card">Ce commentaire contient des spoilers.</string>
     <string name="detail_comments_spoiler_hidden_sheet">Ce commentaire contient des spoilers et a été masqué.</string>
@@ -2050,7 +2050,7 @@
     <string name="settings_liquid_glass_surface_nav">Barre de navigation</string>
     <string name="settings_liquid_glass_surface_home">Accueil</string>
     <string name="settings_liquid_glass_surface_sources">Sélection des sources</string>
-    <string name="settings_liquid_glass_surface_player">Lecteur et ses panneaux</string>
+    <string name="settings_liquid_glass_surface_player">Contrôles du lecteur</string>
     <string name="settings_liquid_glass_surface_popups">Fenêtres et pop-ups</string>
     <string name="settings_liquid_glass_inactive">Choisissez le style Liquid glass dans Apparence pour voir ces effets.</string>
     <string name="player_episode_play_on">Lire sur %1$s</string>
@@ -2064,4 +2064,17 @@
     <string name="settings_liquid_glass_tab_sources">Sources</string>
     <string name="settings_liquid_glass_tab_player">Lecteur</string>
     <string name="settings_liquid_glass_tab_popups">Fenêtres</string>
+    <string name="settings_liquid_glass_material_amoled">AMOLED (noir pur)</string>
+    <string name="settings_liquid_glass_surface_resume">Carte de reprise</string>
+    <string name="settings_liquid_glass_surface_details">Fiche détail</string>
+    <string name="settings_liquid_glass_surface_player_panels">Panneaux du lecteur</string>
+    <string name="settings_liquid_glass_surface_player_cards">Cartes du lecteur</string>
+    <string name="settings_liquid_glass_surface_menu">Menu d’appui long</string>
+    <string name="settings_liquid_glass_surface_profile">Menu du profil</string>
+    <string name="settings_liquid_glass_tab_resume">Reprise</string>
+    <string name="settings_liquid_glass_tab_details">Fiche</string>
+    <string name="settings_liquid_glass_tab_player_panels">Panneaux</string>
+    <string name="settings_liquid_glass_tab_player_cards">Cartes</string>
+    <string name="settings_liquid_glass_tab_menu">Menu</string>
+    <string name="settings_liquid_glass_tab_profile">Profil</string>
 </resources>

@@ -194,6 +194,7 @@ fun PlayerLiveChannelsPanel(
                         .heightIn(max = 640.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                             shape = RoundedCornerShape(24.dp),
                             tint = colorScheme.surface.copy(alpha = colorScheme.surface.alpha * 0.74f),
                             fallback = colorScheme.surface,

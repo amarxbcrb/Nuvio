@@ -83,6 +83,7 @@ internal fun PlayerQualityPanel(
                         .heightIn(max = tokens.components.dialogMaxWidth)
                         .clip(tokens.shapes.playerPanel)
                         .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                             shape = tokens.shapes.playerPanel,
                             tint = tokens.colors.surfaceSheet.copy(alpha = tokens.colors.surfaceSheet.alpha * 0.72f),
                             fallback = tokens.colors.surfaceSheet,

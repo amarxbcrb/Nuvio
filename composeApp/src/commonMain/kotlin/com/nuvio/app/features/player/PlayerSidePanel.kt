@@ -74,6 +74,9 @@ internal fun PlayerSidePanel(
     floating: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
+    ) {
     val tokens = MaterialTheme.nuvio
     val backgroundInteraction = remember { MutableInteractionSource() }
     val panelInteraction = remember { MutableInteractionSource() }
@@ -120,6 +123,7 @@ internal fun PlayerSidePanel(
                         )
                         .clip(shape)
                         .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                             shape = shape,
                             tint = if (floating) {
                                 Color(0xFF0F1724).copy(alpha = 0.62f)
@@ -145,6 +149,7 @@ internal fun PlayerSidePanel(
             }
         }
     }
+}
 }
 
 @Composable

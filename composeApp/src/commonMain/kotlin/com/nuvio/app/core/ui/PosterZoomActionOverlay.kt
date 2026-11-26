@@ -344,7 +344,7 @@ fun NuvioPosterZoomActionOverlay(
                         blurRadius = 24.dp,
                         refractionHeight = 12.dp,
                         refractionAmount = 20.dp,
-                        surface = com.nuvio.app.core.ui.glass.GlassSurface.POPUPS,
+                        surface = com.nuvio.app.core.ui.glass.GlassSurface.CONTEXT_MENU,
                     )
                     .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(NuvioTokens.Space.s20)),
             ) {

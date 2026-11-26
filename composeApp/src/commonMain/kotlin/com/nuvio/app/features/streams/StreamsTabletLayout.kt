@@ -189,6 +189,7 @@ internal fun TabletStreamsLayout(
                             .fillMaxSize()
                             .clip(RoundedCornerShape(24.dp))
                             .liquidGlassSurface(
+                                surface = com.nuvio.app.core.ui.glass.GlassSurface.SOURCES,
                                 backdrop = streamsPanelBackdrop,
                                 shape = RoundedCornerShape(24.dp),
                                 tint = Color.Transparent,

@@ -104,6 +104,7 @@ fun DetailFloatingHeader(
                 .fillMaxWidth()
                 .clipToBounds()
                 .liquidGlassSurface(
+                    surface = com.nuvio.app.core.ui.glass.GlassSurface.DETAILS,
                     backdrop = glassBackdrop,
                     shape = RectangleShape,
                     tint = surfaceColor.copy(alpha = surfaceColor.alpha * 0.7f),

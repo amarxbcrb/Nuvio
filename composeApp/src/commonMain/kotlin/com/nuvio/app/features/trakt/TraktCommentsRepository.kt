@@ -65,7 +65,7 @@ object TraktCommentsRepository {
             }
         }
 
-        val headers = TraktAuthRepository.authorizedHeaders()
+        val headers = commentsHeaders()
             ?: return TraktCommentsPage(emptyList(), page, 0, 0)
 
         val endpoint = when (target.type) {
@@ -126,6 +126,16 @@ object TraktCommentsRepository {
         cache.clear()
     }
 
+    /**
+     * Trakt comments are public: with an account the user's token is sent, without one the app's
+     * key alone is enough to read them.
+     */
+    private suspend fun commentsHeaders(): Map<String, String>? =
+        TraktAuthRepository.authorizedHeaders()
+            ?: TraktConfig.CLIENT_ID.takeIf { it.isNotBlank() }?.let { clientId ->
+                mapOf("trakt-api-version" to "2", "trakt-api-key" to clientId)
+            }
+
     private suspend fun resolveCommentsTarget(meta: MetaDetails): ResolvedCommentsTarget? {
         val type = resolveCommentsType(meta) ?: return null
         val directPathId = resolveDirectPathId(meta)
@@ -172,7 +182,7 @@ object TraktCommentsRepository {
         type: TraktCommentsType,
         tmdbId: Int,
     ): ResolvedCommentsTarget? {
-        val headers = TraktAuthRepository.authorizedHeaders() ?: return null
+        val headers = commentsHeaders() ?: return null
         val url = "https://api.trakt.tv/search/tmdb/$tmdbId?type=${type.apiValue}"
         return try {
             val responseText = httpGetTextWithHeaders(url, headers)

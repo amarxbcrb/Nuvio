@@ -351,8 +351,8 @@ fun MetaDetailsScreen(
         }
     }
 
+    // Trakt comments are public and TMDB reviews need no account: no Trakt login required.
     val shouldShowComments = commentsEnabled &&
-        traktAuthUiState.mode == TraktConnectionMode.CONNECTED &&
         displayedMeta != null &&
         displayedMeta.type.lowercase().let { it == "movie" || it == "series" || it == "show" || it == "tv" }
 
@@ -376,7 +376,7 @@ fun MetaDetailsScreen(
         isCommentsLoading = true
         commentsError = null
         try {
-            val result = TraktCommentsRepository.getCommentsPage(displayedMeta, page = 1)
+            val result = MetaCommentsRepository.getCommentsPage(displayedMeta, page = 1)
             comments = result.items
             commentsCurrentPage = result.currentPage
             commentsPageCount = result.pageCount
@@ -1425,7 +1425,7 @@ fun MetaDetailsScreen(
                                                 isCommentsLoading = true
                                                 commentsError = null
                                                 try {
-                                                    val result = TraktCommentsRepository.getCommentsPage(meta, page = 1, forceRefresh = true)
+                                                    val result = MetaCommentsRepository.getCommentsPage(meta, page = 1, forceRefresh = true)
                                                     comments = result.items
                                                     commentsCurrentPage = result.currentPage
                                                     commentsPageCount = result.pageCount
@@ -1440,7 +1440,7 @@ fun MetaDetailsScreen(
                                                 isCommentsLoadingMore = true
                                                 try {
                                                     val nextPage = commentsCurrentPage + 1
-                                                    val result = TraktCommentsRepository.getCommentsPage(meta, page = nextPage)
+                                                    val result = MetaCommentsRepository.getCommentsPage(meta, page = nextPage)
                                                     val existingIds = comments.map { it.id }.toSet()
                                                     val newComments = result.items.filter { it.id !in existingIds }
                                                     comments = comments + newComments
@@ -1852,7 +1852,7 @@ fun MetaDetailsScreen(
                                             isCommentsLoadingMore = true
                                             try {
                                                 val nextPage = commentsCurrentPage + 1
-                                                val result = TraktCommentsRepository.getCommentsPage(meta, page = nextPage)
+                                                val result = MetaCommentsRepository.getCommentsPage(meta, page = nextPage)
                                                 val existingIds = comments.map { it.id }.toSet()
                                                 val newComments = result.items.filter { it.id !in existingIds }
                                                 comments = comments + newComments

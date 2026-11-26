@@ -149,6 +149,7 @@ fun SkipIntroButton(
                 )
                 .clip(shape)
                 .ambientLiquidGlass(
+                    surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_CARDS,
                     shape = shape,
                     tint = Color(0xFF1E1E1E).copy(alpha = 0.6f),
                     fallback = Color(0xFF1E1E1E).copy(alpha = 0.85f),

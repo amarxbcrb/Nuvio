@@ -97,6 +97,7 @@ internal fun PlaybackInfoModal(
                         .heightIn(max = 560.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                             shape = RoundedCornerShape(24.dp),
                             tint = Color(0xFF16161B).copy(alpha = 0.74f),
                             fallback = Color(0xFF1E1E24),

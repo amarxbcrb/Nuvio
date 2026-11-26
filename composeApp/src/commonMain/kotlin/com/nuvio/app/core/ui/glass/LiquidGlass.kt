@@ -61,13 +61,25 @@ object LiquidGlassSettings {
 enum class GlassSurface(val key: String) {
     NAVIGATION_BAR("nav"),
     HOME("home"),
+    RESUME_CARD("resume"),
+    DETAILS("details"),
     SOURCES("sources"),
+    /** Player bars and buttons. */
     PLAYER("player"),
+    /** Player panels: episodes, sources, subtitles, speed, quality, info. */
+    PLAYER_PANELS("player_panels"),
+    /** Player cards: skip intro, next episode, recommendation. */
+    PLAYER_CARDS("player_cards"),
+    CONTEXT_MENU("menu"),
+    PROFILE_MENU("profile"),
     POPUPS("popups"),
     ;
 
     companion object {
         fun fromKey(key: String): GlassSurface? = entries.firstOrNull { it.key == key }
+
+        /** Added in 1.1.0: on for those who saved their choices before they existed. */
+        internal val addedInVersion4 = setOf(RESUME_CARD, DETAILS, PLAYER_PANELS, PLAYER_CARDS, CONTEXT_MENU, PROFILE_MENU)
     }
 }
 
@@ -225,6 +237,8 @@ enum class LiquidGlassMaterial(val key: String) {
     FROSTED("frosted"),
     CLEAR("clear"),
     SOLID("solid"),
+    /** Pure black with a hairline edge, for AMOLED screens. */
+    AMOLED("amoled"),
     ;
 
     companion object {
@@ -243,7 +257,7 @@ data class LiquidGlassStyle(
     val surfaces: Set<GlassSurface> = GlassSurface.entries.toSet(),
 ) {
     val usesBackdrop: Boolean
-        get() = material != LiquidGlassMaterial.SOLID
+        get() = material != LiquidGlassMaterial.SOLID && material != LiquidGlassMaterial.AMOLED
 
     val usesBlur: Boolean
         get() = material == LiquidGlassMaterial.LIQUID || material == LiquidGlassMaterial.FROSTED
@@ -264,7 +278,8 @@ data class LiquidGlassStyle(
     companion object {
         val Default = LiquidGlassStyle()
 
-        private const val EncodingVersion = "3"
+        private const val EncodingVersion = "4"
+        private const val PreviousSurfacesVersion = "3"
         private const val SurfacesEncodingVersion = "2"
         private const val SurfaceSeparator = ","
         private const val NoSurface = "-"
@@ -275,7 +290,7 @@ data class LiquidGlassStyle(
             if (raw.isNullOrBlank()) return Default
             val parts = raw.split(Separator)
             val (vibrancyAt, highlightAt, shadowAt, lensAt) = when (parts.firstOrNull()) {
-                EncodingVersion, SurfacesEncodingVersion -> listOf(2, 3, 4, 5)
+                EncodingVersion, PreviousSurfacesVersion, SurfacesEncodingVersion -> listOf(2, 3, 4, 5)
                 LegacyEncodingVersion -> listOf(5, 7, 8, 9)
                 else -> return Default
             }
@@ -291,14 +306,16 @@ data class LiquidGlassStyle(
                 edgeHighlight = flag(highlightAt, Default.edgeHighlight),
                 shadow = flag(shadowAt, Default.shadow),
                 selectionLens = flag(lensAt, Default.selectionLens),
-                surfaces = if (parts.firstOrNull() == EncodingVersion) {
-                    parts.getOrNull(6)
-                        ?.split(SurfaceSeparator)
-                        ?.mapNotNull(GlassSurface::fromKey)
-                        ?.toSet()
-                        ?: Default.surfaces
-                } else {
-                    Default.surfaces
+                surfaces = when (parts.firstOrNull()) {
+                    EncodingVersion, PreviousSurfacesVersion -> {
+                        val saved = parts.getOrNull(6)
+                            ?.split(SurfaceSeparator)
+                            ?.mapNotNull(GlassSurface::fromKey)
+                            ?.toSet()
+                            ?: Default.surfaces
+                        if (parts.firstOrNull() == PreviousSurfacesVersion) saved + GlassSurface.addedInVersion4 else saved
+                    }
+                    else -> Default.surfaces
                 },
             )
         }
@@ -333,6 +350,10 @@ internal fun Modifier.liquidGlassSurface(
     // Elements outside the listed screens (surface null) keep the default look.
     val own = if (isBar) null else surface?.let(GlassAppearance::settingsFor) ?: GlassSurfaceSettings()
     val style = own?.asStyle(GlassAppearance.style) ?: GlassAppearance.style
+    if (style.material == LiquidGlassMaterial.AMOLED && GlassAppearance.isEnabledFor(surface)) {
+        // Pure black with a hairline, whatever the device can do.
+        return clip(shape).background(Color.Black).border(0.75.dp, Color.White.copy(alpha = 0.12f), shape)
+    }
     if (backdrop == null || !isLiquidGlassSupported() || !style.usesBackdrop || !GlassAppearance.isEnabledFor(surface)) {
         return if (fallbackBrush != null) clip(shape).background(fallbackBrush) else clip(shape).background(fallback)
     }
@@ -418,6 +439,8 @@ internal fun Modifier.ambientLiquidGlass(
     withShadow: Boolean = false,
     fallbackBrush: Brush? = null,
     backdropOpacity: Float = 1f,
+    /** The element this glass belongs to (« Liquid glass » tab); the screen's by default. */
+    surface: GlassSurface? = LocalGlassSurface.current,
 ): Modifier {
     val backdrop = LocalLiquidGlassBackdrop.current
     val host = backdrop as? LiquidGlassBackdropHost
@@ -442,7 +465,7 @@ internal fun Modifier.ambientLiquidGlass(
         withShadow = withShadow,
         fallbackBrush = fallbackBrush,
         backdropOpacity = backdropOpacity,
-        surface = LocalGlassSurface.current,
+        surface = surface,
     )
 }
 

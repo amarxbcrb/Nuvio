@@ -120,7 +120,7 @@ fun NuvioFloatingPrompt(
     val aboveNavBar = floatingNavigationBarPadding().calculateBottomPadding() + 64.dp + 12.dp
     // The resume card belongs to the home screen: it follows the « Accueil » box of the Liquid glass settings.
     val glassStyle = LiquidGlassSettings.enabled &&
-        com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.HOME)
+        com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.RESUME_CARD)
     val accent = tokens.colors.accent
 
     AnimatedVisibility(
@@ -183,6 +183,7 @@ fun NuvioFloatingPrompt(
                 glassActive -> Modifier
                     .shadow(tokens.elevation.modal, cardShape)
                     .ambientLiquidGlass(
+                        surface = com.nuvio.app.core.ui.glass.GlassSurface.RESUME_CARD,
                         shape = cardShape,
                         tint = Color.Black.copy(alpha = 0.35f),
                         fallback = Color.Black.copy(alpha = 0.72f),

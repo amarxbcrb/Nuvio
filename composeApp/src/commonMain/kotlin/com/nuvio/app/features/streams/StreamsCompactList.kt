@@ -356,8 +356,8 @@ internal fun CompactStreamList(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(58.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .height(50.dp)
                     .linksSurface(pill)
                     .padding(5.dp),
             ) {
@@ -784,7 +784,11 @@ private fun LinkRow(
     val tokens = MaterialTheme.nuvio
     val info = remember(stream) { StreamLanguageDetector.detect(stream, cloudStreamProviderLanguages()[stream.addonId]) }
     val resolution = remember(stream) { StreamQualityDetector.detect(stream).resolution }
-    val format = remember(stream) { linkFormat(stream) }
+    val techBadges = remember(stream) {
+        StreamTechBadges.detect(stream).filter {
+            it.kind == TechBadgeKind.Hdr || it.kind == TechBadgeKind.Audio || it.kind == TechBadgeKind.Release
+        }
+    }
     val origin = stream.sourceName?.trim()?.takeIf { it.isNotEmpty() && !it.equals(stream.addonName, ignoreCase = true) }
         ?: stream.cleanDisplayName().takeIf { !it.equals(stream.addonName, ignoreCase = true) }
         ?: stream.addonName
@@ -861,7 +865,18 @@ private fun LinkRow(
                         listOfNotNull(info.versionFlag(), versionShort(info.versionKey())).joinToString(" "),
                         LinkBadgeTone.Language,
                     )
-                    format?.let { LinkBadge(it, LinkBadgeTone.Neutral) }
+                    // Picture and sound (Dolby Vision, HDR, Atmos, DD+…) and the release (BluRay,
+                    // WEB…), read from the link's name. The container (hls, mp4) is not shown.
+                    techBadges.forEach { badge ->
+                        LinkBadge(
+                            badge.text,
+                            when (badge.kind) {
+                                TechBadgeKind.Hdr -> LinkBadgeTone.Hdr
+                                TechBadgeKind.Audio -> LinkBadgeTone.Audio
+                                else -> LinkBadgeTone.Neutral
+                            },
+                        )
+                    }
                     stream.behaviorHints.videoSize?.let { LinkBadge(formatLinkSizeShort(it), LinkBadgeTone.Neutral) }
                 }
             }
@@ -879,21 +894,23 @@ private fun LinkRow(
             RoundLinkButton(
                 icon = Icons.Rounded.PlayArrow,
                 label = stringResource(Res.string.action_play),
-                tint = if (playFilled) Color.White else tokens.colors.accent.copy(alpha = 0.95f).compositeOver(Color.White),
-                container = if (playFilled) tokens.colors.accent else tokens.colors.accent.copy(alpha = 0.32f),
+                tint = Color.White,
+                container = if (playFilled) tokens.colors.accent else tokens.colors.accent.copy(alpha = 0.6f),
                 onClick = onPlay,
             )
         }
     }
 }
 
-private enum class LinkBadgeTone { Quality, Language, Neutral }
+private enum class LinkBadgeTone { Quality, Language, Hdr, Audio, Neutral }
 
 @Composable
 private fun LinkBadge(text: String, tone: LinkBadgeTone) {
     val (fg, bg) = when (tone) {
         LinkBadgeTone.Quality -> Color(0xFFF2C46D) to Color(0xFF6B4F1D).copy(alpha = 0.55f)
         LinkBadgeTone.Language -> Color(0xFF9DB8FF) to Color(0xFF2F4F9E).copy(alpha = 0.50f)
+        LinkBadgeTone.Hdr -> Color(0xFFE2B8FF) to Color(0xFF5B2E86).copy(alpha = 0.55f)
+        LinkBadgeTone.Audio -> Color(0xFF8EE6DA) to Color(0xFF1F5E58).copy(alpha = 0.55f)
         LinkBadgeTone.Neutral -> Color.White.copy(alpha = 0.82f) to Color.White.copy(alpha = 0.10f)
     }
     Text(
@@ -1051,7 +1068,7 @@ private fun PlayButton(title: String, subtitle: String, progress: Float? = null,
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
+                .height(54.dp)
                 .nuvioPressScale(pressedScale = 0.97f)
                 .shadow(elevation = 18.dp, shape = pill, ambientColor = accent, spotColor = accent)
                 .clip(pill)
@@ -1065,13 +1082,14 @@ private fun PlayButton(title: String, subtitle: String, progress: Float? = null,
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
-            Spacer(Modifier.width(12.dp))
+            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(8.dp))
+            // Title and source on two tight lines, no extra height.
             Column {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
                 Text(
                     subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.82f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -1081,7 +1099,7 @@ private fun PlayButton(title: String, subtitle: String, progress: Float? = null,
         if (progress != null && progress > 0f) {
             Box(
                 modifier = Modifier
-                    .padding(start = 8.dp, end = 8.dp, top = 12.dp)
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp)
                     .fillMaxWidth()
                     .height(4.dp)
                     .clip(pill)

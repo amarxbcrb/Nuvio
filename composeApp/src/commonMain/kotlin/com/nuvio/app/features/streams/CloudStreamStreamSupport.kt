@@ -19,9 +19,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
+import com.nuvio.app.features.cloudstream.CloudStreamPartialLinks
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 private val cloudStreamFetchLog = Logger.withTag("CloudStreamFetch")
 private val cloudStreamProviderScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -88,6 +94,8 @@ internal fun cloudStreamProviderGroupsForRequest(
 internal suspend fun resolveCloudStreamProviderStreams(
     providerGroup: CloudStreamProviderGroup,
     request: CloudStreamSearchRequest?,
+    /** Gets the links found so far (still loading) while the extension keeps looking. */
+    onPartial: ((AddonStreamGroup) -> Unit)? = null,
 ): AddonStreamGroup {
     val searchRequest = request?.takeIf { it.title.isNotBlank() }
         ?: return providerGroup.toCloudStreamGroup(
@@ -127,12 +135,36 @@ internal suspend fun resolveCloudStreamProviderStreams(
                 }
 
                 // Anime extensions can offer the same episode dubbed and subtitled; both are loaded,
-                // at the same time rather than one after the other.
+                // at the same time rather than one after the other. Their links are shown as they
+                // come (onPartial), the final list still waits for the extension as before.
+                val partialByTarget = mutableMapOf<Int, List<StreamItem>>()
+                val partialLock = SynchronizedObject()
                 val streams = coroutineScope {
-                    targets.map { target ->
+                    targets.mapIndexed { index, target ->
                         async {
+                            val partial = if (onPartial == null) EmptyCoroutineContext else CloudStreamPartialLinks { found ->
+                                // Called from the extension's thread: converted off it.
+                                cloudStreamProviderScope.launch {
+                                    val items = cloudStreamSourcesToStreamItems(
+                                        providerId = providerGroup.providerId,
+                                        providerName = providerGroup.addonName,
+                                        sources = found,
+                                    ).map { stream -> stream.withCloudStreamAudioVariant(target.audioVariant) }
+                                    val all = synchronized(partialLock) {
+                                        // Lists only grow: an older, shorter one arriving late is ignored.
+                                        if (items.size < partialByTarget[index].orEmpty().size) return@launch
+                                        partialByTarget[index] = items
+                                        partialByTarget.entries.sortedBy { it.key }.flatMap { it.value }
+                                    }
+                                    runCatching {
+                                        onPartial(providerGroup.toCloudStreamGroup(streams = all, error = null).copy(isLoading = true))
+                                    }
+                                }
+                            }
                             val sources = runCatchingUnlessCancelled {
-                                CloudStreamRepository.loadLinks(providerGroup.providerId, target.data).getOrThrow()
+                                withContext(partial) {
+                                    CloudStreamRepository.loadLinks(providerGroup.providerId, target.data).getOrThrow()
+                                }
                             }.onFailure { error -> lastError = error }
                                 .getOrNull()
                                 .orEmpty()

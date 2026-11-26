@@ -54,6 +54,7 @@ internal fun PlayerSpeedPopup(
                 .width(76.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                     shape = RoundedCornerShape(14.dp),
                     tint = Color.Black.copy(alpha = 0.45f),
                     fallback = Color.Black.copy(alpha = 0.6f),

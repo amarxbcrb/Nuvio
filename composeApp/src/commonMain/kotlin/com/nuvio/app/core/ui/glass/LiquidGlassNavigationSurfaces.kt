@@ -289,11 +289,12 @@ internal val GlassSurfaceColor = Color(0xFF1C1C1E)
  * glass turned off app-wide, or no RenderEffect). The glass version is [LiquidGlassFrostedBar].
  */
 @Composable
-internal fun SolidGlassBar(modifier: Modifier, edgeHighlight: Boolean = true) {
+internal fun SolidGlassBar(modifier: Modifier, edgeHighlight: Boolean = true, amoled: Boolean = false) {
     Box(
         modifier
             .drawWithCache {
-                val fill = GlassSurfaceColor.copy(alpha = 0.82f)
+                // AMOLED: pure black, the screen pixels stay off.
+                val fill = if (amoled) Color.Black else GlassSurfaceColor.copy(alpha = 0.82f)
                 val edge = Brush.verticalGradient(
                     listOf(Color.White.copy(alpha = 0.27f), Color.White.copy(alpha = 0.02f)),
                 )

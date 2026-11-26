@@ -288,6 +288,7 @@ private val LiquidGlassMaterial.labelRes: StringResource
         LiquidGlassMaterial.FROSTED -> Res.string.settings_nav_bar_glass_material_frosted
         LiquidGlassMaterial.CLEAR -> Res.string.settings_nav_bar_glass_material_clear
         LiquidGlassMaterial.SOLID -> Res.string.settings_nav_bar_glass_material_solid
+        LiquidGlassMaterial.AMOLED -> Res.string.settings_liquid_glass_material_amoled
     }
 
 internal fun navBarGlassShowsLensControls(style: LiquidGlassStyle, refractionSupported: Boolean): Boolean =
@@ -906,8 +907,14 @@ private val GlassSurface.labelRes: StringResource
     get() = when (this) {
         GlassSurface.NAVIGATION_BAR -> Res.string.settings_liquid_glass_surface_nav
         GlassSurface.HOME -> Res.string.settings_liquid_glass_surface_home
+        GlassSurface.RESUME_CARD -> Res.string.settings_liquid_glass_surface_resume
+        GlassSurface.DETAILS -> Res.string.settings_liquid_glass_surface_details
         GlassSurface.SOURCES -> Res.string.settings_liquid_glass_surface_sources
         GlassSurface.PLAYER -> Res.string.settings_liquid_glass_surface_player
+        GlassSurface.PLAYER_PANELS -> Res.string.settings_liquid_glass_surface_player_panels
+        GlassSurface.PLAYER_CARDS -> Res.string.settings_liquid_glass_surface_player_cards
+        GlassSurface.CONTEXT_MENU -> Res.string.settings_liquid_glass_surface_menu
+        GlassSurface.PROFILE_MENU -> Res.string.settings_liquid_glass_surface_profile
         GlassSurface.POPUPS -> Res.string.settings_liquid_glass_surface_popups
     }
 
@@ -1016,7 +1023,13 @@ private val GlassSurface.shortLabelRes: StringResource
     get() = when (this) {
         GlassSurface.NAVIGATION_BAR -> Res.string.settings_liquid_glass_tab_nav
         GlassSurface.HOME -> Res.string.settings_liquid_glass_surface_home
+        GlassSurface.RESUME_CARD -> Res.string.settings_liquid_glass_tab_resume
+        GlassSurface.DETAILS -> Res.string.settings_liquid_glass_tab_details
         GlassSurface.SOURCES -> Res.string.settings_liquid_glass_tab_sources
         GlassSurface.PLAYER -> Res.string.settings_liquid_glass_tab_player
+        GlassSurface.PLAYER_PANELS -> Res.string.settings_liquid_glass_tab_player_panels
+        GlassSurface.PLAYER_CARDS -> Res.string.settings_liquid_glass_tab_player_cards
+        GlassSurface.CONTEXT_MENU -> Res.string.settings_liquid_glass_tab_menu
+        GlassSurface.PROFILE_MENU -> Res.string.settings_liquid_glass_tab_profile
         GlassSurface.POPUPS -> Res.string.settings_liquid_glass_tab_popups
     }

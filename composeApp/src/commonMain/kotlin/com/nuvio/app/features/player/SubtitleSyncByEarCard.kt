@@ -74,6 +74,7 @@ fun SubtitleSyncByEarCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .ambientLiquidGlass(
+                            surface = com.nuvio.app.core.ui.glass.GlassSurface.PLAYER_PANELS,
                     shape = RoundedCornerShape(20.dp),
                     tint = Color(0xFF17171A).copy(alpha = 0.72f),
                     fallback = Color(0xFF17171A).copy(alpha = 0.94f),

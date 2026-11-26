@@ -516,6 +516,8 @@ private class AndroidDexCloudStreamProvider(
     }
 
     override suspend fun loadLinks(data: String): List<CloudStreamPlaybackSource> = withExtensionUi {
+        // Who wants the links as they come (the links screen), if anyone.
+        val partial = coroutineContext[CloudStreamPartialLinks]
         val route = decodeAndroidDexRoute(data)
         val api = findProvider(route.providerClassName)
         val subtitles = Collections.synchronizedList(mutableListOf<CloudStreamSubtitle>())
@@ -543,6 +545,10 @@ private class AndroidDexCloudStreamProvider(
                     { link ->
                         links += link
                         firstLinkAtMs.compareAndSet(0L, System.currentTimeMillis())
+                        if (partial != null) {
+                            val snapshot = synchronized(links) { links.toList() }
+                            runCatching { partial.onLinks(snapshot.toPlaybackSources(subtitles)) }
+                        }
                     },
                 )
             }
@@ -566,20 +572,8 @@ private class AndroidDexCloudStreamProvider(
         val subtitleSnapshot = synchronized(subtitles) { subtitles.toList() }
         val linkSnapshot = synchronized(links) { links.toList() }
         if (!completed && linkSnapshot.isEmpty()) error("CloudStream provider could not resolve this source")
-        linkSnapshot.distinctBy { link ->
-            listOf(link.url, link.referer, link.quality.toString(), link.type.name, link.headers.toString())
-        }.map { link ->
-            CloudStreamPlaybackSource(
-                name = link.name.ifBlank { link.source },
-                url = link.url,
-                quality = link.quality.takeIf { it > 0 },
-                referer = link.referer.takeIf(String::isNotBlank),
-                headers = link.headers,
-                subtitles = subtitleSnapshot,
-                isHls = link.type == ExtractorLinkType.M3U8,
-                isDash = link.type == ExtractorLinkType.DASH,
-            )
-        }.also { if (it.isEmpty()) error("CloudStream provider returned no playable links") }
+        linkSnapshot.toPlaybackSources(subtitleSnapshot)
+            .also { if (it.isEmpty()) error("CloudStream provider returned no playable links") }
     }
 
     /**
@@ -670,7 +664,7 @@ private class AndroidDexCloudStreamProvider(
         private const val DEFAULT_DISCOVERY_TIMEOUT_MS = 15_000L
         private const val DEFAULT_LOAD_TIMEOUT_MS = 30_000L
         private const val DEFAULT_LINK_TIMEOUT_MS = 120_000L
-        private const val LINKS_AFTER_FIRST_WAIT_MS = 2_500L
+        private const val LINKS_AFTER_FIRST_WAIT_MS = 4_000L
         private const val LINK_POLL_MS = 150L
 
         /** Runs extensions' link searches detached from their callers (see loadLinks). */
@@ -711,4 +705,23 @@ private fun TvType?.toNuvioTvType(): CloudStreamTvType = when (this) {
     TvType.Live -> CloudStreamTvType.Live
     TvType.Music, TvType.Audio, TvType.AudioBook, TvType.Podcast -> CloudStreamTvType.Music
     else -> CloudStreamTvType.Other
+}
+
+/** The links of an extension as the app's playback sources, duplicates removed. */
+private fun List<ExtractorLink>.toPlaybackSources(subtitles: List<CloudStreamSubtitle>): List<CloudStreamPlaybackSource> {
+    val subtitleSnapshot = synchronized(subtitles) { subtitles.toList() }
+    return distinctBy { link ->
+        listOf(link.url, link.referer, link.quality.toString(), link.type.name, link.headers.toString())
+    }.map { link ->
+        CloudStreamPlaybackSource(
+            name = link.name.ifBlank { link.source },
+            url = link.url,
+            quality = link.quality.takeIf { it > 0 },
+            referer = link.referer.takeIf(String::isNotBlank),
+            headers = link.headers,
+            subtitles = subtitleSnapshot,
+            isHls = link.type == ExtractorLinkType.M3U8,
+            isDash = link.type == ExtractorLinkType.DASH,
+        )
+    }
 }

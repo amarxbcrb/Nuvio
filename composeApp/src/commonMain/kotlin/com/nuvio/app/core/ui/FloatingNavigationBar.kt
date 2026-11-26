@@ -339,7 +339,7 @@ internal fun FloatingNavigationBar(
                                             }
                                         }
                                     } else {
-                                        SolidGlassBar(Modifier.matchParentSize(), glassStyle.edgeHighlight)
+                                        SolidGlassBar(Modifier.matchParentSize(), glassStyle.edgeHighlight, amoled = glassStyle.material == com.nuvio.app.core.ui.glass.LiquidGlassMaterial.AMOLED)
                                     }
                                 }
                             }

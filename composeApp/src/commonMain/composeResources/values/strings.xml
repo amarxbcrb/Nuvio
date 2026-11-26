@@ -667,7 +667,7 @@
     <string name="detail_comments_badge_rating">%1$d/10</string>
     <string name="detail_comments_badge_review">Review</string>
     <string name="detail_comments_badge_spoiler">Spoiler</string>
-    <string name="detail_comments_empty">No Trakt reviews available yet.</string>
+    <string name="detail_comments_empty">No reviews yet.</string>
     <string name="detail_comments_likes">%1$d likes</string>
     <string name="detail_comments_spoiler_card">This comment contains spoilers.</string>
     <string name="detail_comments_spoiler_hidden_sheet">This comment contains spoilers and has been hidden.</string>
@@ -2981,7 +2981,7 @@
     <string name="settings_liquid_glass_surface_nav">Navigation bar</string>
     <string name="settings_liquid_glass_surface_home">Home</string>
     <string name="settings_liquid_glass_surface_sources">Source selection</string>
-    <string name="settings_liquid_glass_surface_player">Player and its panels</string>
+    <string name="settings_liquid_glass_surface_player">Player controls</string>
     <string name="settings_liquid_glass_surface_popups">Sheets and popups</string>
     <string name="settings_liquid_glass_inactive">Choose the Liquid glass style in Appearance to see these effects.</string>
     <string name="player_episode_play_on">Play on %1$s</string>
@@ -2995,4 +2995,17 @@
     <string name="settings_liquid_glass_tab_sources">Sources</string>
     <string name="settings_liquid_glass_tab_player">Player</string>
     <string name="settings_liquid_glass_tab_popups">Windows</string>
+    <string name="settings_liquid_glass_material_amoled">AMOLED (pure black)</string>
+    <string name="settings_liquid_glass_surface_resume">Resume card</string>
+    <string name="settings_liquid_glass_surface_details">Title page</string>
+    <string name="settings_liquid_glass_surface_player_panels">Player panels</string>
+    <string name="settings_liquid_glass_surface_player_cards">Player cards</string>
+    <string name="settings_liquid_glass_surface_menu">Long-press menu</string>
+    <string name="settings_liquid_glass_surface_profile">Profile menu</string>
+    <string name="settings_liquid_glass_tab_resume">Resume</string>
+    <string name="settings_liquid_glass_tab_details">Title page</string>
+    <string name="settings_liquid_glass_tab_player_panels">Panels</string>
+    <string name="settings_liquid_glass_tab_player_cards">Cards</string>
+    <string name="settings_liquid_glass_tab_menu">Menu</string>
+    <string name="settings_liquid_glass_tab_profile">Profile</string>
 </resources>
