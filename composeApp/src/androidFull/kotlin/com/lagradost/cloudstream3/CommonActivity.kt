@@ -41,6 +41,10 @@ object CommonActivity {
 
     @PublishedApi
     internal fun allowUi(allowed: Boolean) {
-        if (allowed) uiRequests.incrementAndGet() else uiRequests.updateAndGet { count -> (count - 1).coerceAtLeast(0) }
+        if (allowed) {
+            uiRequests.incrementAndGet()
+            // Extension popups that open now are shown one at a time.
+            com.nuvio.app.features.cloudstream.ExtensionPopupQueue.watch()
+        } else uiRequests.updateAndGet { count -> (count - 1).coerceAtLeast(0) }
     }
 }

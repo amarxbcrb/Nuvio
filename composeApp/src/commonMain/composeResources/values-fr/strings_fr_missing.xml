@@ -667,7 +667,7 @@
     <string name="player_loading_subtitles_addon">Sous-titres : %1$s (%2$d / %3$d)</string>
     <string name="player_loading_building">Préparation du lecteur…</string>
     <string name="player_loading_starting">Démarrage du lien…</string>
-    <string name="player_loading_buffering">Mise en mémoire tampon…</string>
+    <string name="player_loading_buffering">Chargement…</string>
     <string name="debrid_resolving_stream">Résolution du lien debrid</string>
     <string name="youtube_resolving_stream">Chargement de la vidéo YouTube</string>
     <string name="youtube_resolution_failed">Impossible de charger cette vidéo YouTube.</string>

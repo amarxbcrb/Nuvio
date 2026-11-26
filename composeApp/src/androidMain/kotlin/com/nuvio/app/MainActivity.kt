@@ -232,14 +232,6 @@ open class MainActivity : AppCompatActivity() {
         contentReady = true
     }
 
-    // Extension popups go through a queue so they show one after another, never stacked.
-    private val extensionPopupQueue by lazy {
-        com.nuvio.app.core.ui.ExtensionPopupQueue(super.getSystemService(WINDOW_SERVICE) as android.view.WindowManager)
-    }
-
-    override fun getSystemService(name: String): Any? =
-        if (name == WINDOW_SERVICE && window != null) extensionPopupQueue else super.getSystemService(name)
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

@@ -1964,7 +1964,7 @@
     <string name="settings_p2p_hide_stats_title">Masquer les statistiques torrent</string>
     <string name="settings_p2p_hide_stats_subtitle">Masquer la mémoire tampon, les seeders, les pairs et la vitesse de téléchargement pendant le chargement et la lecture</string>
     <string name="player_torrent_peer_info">%1$d sources · %2$d pairs</string>
-    <string name="player_torrent_buffered_status">%1$s en mémoire tampon · %2$s · %3$s</string>
+    <string name="player_torrent_buffered_status">%1$s chargé · %2$s · %3$s</string>
     <string name="player_torrent_status">%1$s · %2$s</string>
     <string name="player_torrent_stats">%1$d pairs · %2$d sources · %3$d %</string>
     <string name="player_torrent_connecting_peers">Connexion aux pairs…</string>

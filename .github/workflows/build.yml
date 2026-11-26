@@ -165,9 +165,10 @@ jobs:
           for old in nuvio-plus-latest nuvio-pro-latest; do
             gh release delete "$old" --cleanup-tag --yes 2>/dev/null || true
           done
-          # Keep the 5 newest numbered releases.
+          # Keep the 5 newest numbered releases, plus the backup ones listed here (v0.6.23 is the
+          # last version known to work well before the 0.6.24 crash; it is never deleted).
           gh release list --limit 100 --json tagName,createdAt \
-            --jq '[.[] | select(.tagName | startswith("v"))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' |
+            --jq '[.[] | select(.tagName | startswith("v")) | select(.tagName != "v0.6.23")] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' |
             while read -r tag; do
               gh release delete "$tag" --cleanup-tag --yes
             done
