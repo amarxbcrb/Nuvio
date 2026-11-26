@@ -528,37 +528,13 @@ object StreamsRepository {
                     }
                 }
 
-                // Favorites in the order they were starred: start the first one that has a playable
-                // link as soon as it answers, without waiting for the other sources. A favorite still
-                // searching is waited for (up to FAVORITE_WAIT_MS) only when no favorite above it had a link.
-                val pinnedOrder = PinnedStreamSourcesRepository.pinnedSourceIds.value
-                val favoriteGroups = _uiState.value.groups
-                    .filter { group -> PinnedStreamSourcesRepository.isFavoriteGroup(group.addonId) }
-                    .sortedBy { group ->
-                        pinnedOrder.indexOfFirst { key -> key == group.addonId || key.startsWith(group.addonId + "|") }
-                            .let { if (it < 0) Int.MAX_VALUE else it }
-                    }
-                var waitingOnFavorite = false
-                for (group in favoriteGroups) {
-                    if (group.isLoading) {
-                        waitingOnFavorite = !favoriteWaitElapsed
-                        break
-                    }
-                    val favoriteEvaluation = evaluateAutoPlay(streams = group.streams)
-                    if (favoriteEvaluation.stream != null) {
-                        settleAutoPlay(favoriteEvaluation)
-                        return
-                    }
-                }
-                if (waitingOnFavorite) return
-
-                // No favorite could play it: the first playable link of any source.
-                if (timeoutElapsed) {
-                    val earlyEvaluation = evaluateAutoPlay()
-                    if (earlyEvaluation.stream != null) {
-                        settleAutoPlay(earlyEvaluation)
-                        return
-                    }
+                // No previous link: the first playable link that matches the profile (the groups are
+                // already filtered by its languages) starts right away, without waiting for the
+                // favorites or the delay; favorites only come first among links already found.
+                val firstEvaluation = evaluateAutoPlay()
+                if (firstEvaluation.stream != null) {
+                    settleAutoPlay(firstEvaluation)
+                    return
                 }
 
                 if (
@@ -628,6 +604,8 @@ object StreamsRepository {
                         emptyStateReason = updated.toEmptyStateReason(true),
                     )
                 }
+                // « Lire » starts on the first link found, not when the extension has finished.
+                updateAutoPlayAfterStreamsChanged()
             }
 
             fun publishAddonGroupAfterCacheCheck(group: AddonStreamGroup) {
@@ -796,7 +774,8 @@ object StreamsRepository {
                             request = cloudStreamSearchRequest,
                             // Links appear as soon as the extension finds them; the source stays
                             // « loading » and the final list replaces them when it is done.
-                            onPartial = { partial -> publishPartialAddonGroup(presentStreamGroup(partial)) },
+                            // Back on this search's coroutines, like the other updates.
+                            onPartial = { partial -> launch { publishPartialAddonGroup(presentStreamGroup(partial)) } },
                         )
                     }
                     StreamSourceStats.record(group.addonId, hadLinks = group.streams.isNotEmpty())
