@@ -123,6 +123,7 @@ object ThemeSettingsRepository {
         NativeTabBridge.publishLiquidGlassEnabled(NuvioTabBarBehavior.Default.isEnabled)
         _selectedAppLanguage.value = AppLanguage.DEVICE
         _navBarGlowEnabled.value = true
+        com.nuvio.app.core.ui.glass.GlassAppearance.glow = _navBarGlowEnabled.value
         _navBarDefaultIconColorEnabled.value = false
         _navBarDefaultIconColor.value = DEFAULT_NAV_BAR_ICON_COLOR
         navBarDefaultIconColorDraftDirty = false
@@ -131,6 +132,7 @@ object ThemeSettingsRepository {
         _navBarStyle.value = NavBarStyle.ADAPTIVE
         _navBarPosition.value = NavBarPosition.BOTTOM
         _navBarGlass.value = LiquidGlassStyle.Default
+        com.nuvio.app.core.ui.glass.GlassAppearance.style = _navBarGlass.value
         applyLiquidGlassEffectsEnabled(true)
     }
 
@@ -161,6 +163,7 @@ object ThemeSettingsRepository {
         ThemeSettingsStorage.applySelectedAppLanguage(appLanguage.code)
         _selectedAppLanguage.value = appLanguage
         _navBarGlowEnabled.value = ThemeSettingsStorage.loadNavBarGlowEnabled() ?: true
+        com.nuvio.app.core.ui.glass.GlassAppearance.glow = _navBarGlowEnabled.value
         _navBarStyle.value = NavBarStyle.fromKey(ThemeSettingsStorage.loadNavBarStyle())
         _navBarPosition.value = NavBarPosition.fromKey(ThemeSettingsStorage.loadNavBarPosition())
         _navBarDefaultIconColorEnabled.value = ThemeSettingsStorage.loadNavBarDefaultIconColorEnabled() ?: false
@@ -179,6 +182,7 @@ object ThemeSettingsRepository {
         )
         val storedNavBarGlass = ThemeSettingsStorage.loadNavBarGlass()
         _navBarGlass.value = LiquidGlassStyle.decode(storedNavBarGlass)
+        com.nuvio.app.core.ui.glass.GlassAppearance.style = _navBarGlass.value
         migrateLegacyNavBarGlass(storedNavBarGlass)
         applyLiquidGlassEffectsEnabled(ThemeSettingsStorage.loadLiquidGlassEffectsEnabled() ?: true)
     }
@@ -293,6 +297,7 @@ object ThemeSettingsRepository {
         ensureLoaded()
         if (_navBarGlowEnabled.value == enabled) return
         _navBarGlowEnabled.value = enabled
+        com.nuvio.app.core.ui.glass.GlassAppearance.glow = _navBarGlowEnabled.value
         ThemeSettingsStorage.saveNavBarGlowEnabled(enabled)
     }
 
@@ -402,6 +407,7 @@ object ThemeSettingsRepository {
         ensureLoaded()
         if (_navBarGlass.value == style) return
         _navBarGlass.value = style
+        com.nuvio.app.core.ui.glass.GlassAppearance.style = _navBarGlass.value
         ThemeSettingsStorage.saveNavBarGlass(style.encode())
     }
 

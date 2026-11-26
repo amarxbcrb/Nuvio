@@ -9,6 +9,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.nuvio.app.core.ui.glass.LiquidGlassSettings
+import com.nuvio.app.core.ui.glass.ambientLiquidGlass
+import com.nuvio.app.core.ui.glass.isAmbientLiquidGlassActive
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -109,9 +116,10 @@ fun NuvioFloatingPrompt(
         }
     }
 
-    val navBarBottom = nuvioBottomNavigationBarInsets()
-        .asPaddingValues()
-        .calculateBottomPadding()
+    // Just above the floating navigation bar (its bottom margin + its tallest height + a gap).
+    val aboveNavBar = floatingNavigationBarPadding().calculateBottomPadding() + 64.dp + 12.dp
+    val glassStyle = LiquidGlassSettings.enabled
+    val accent = tokens.colors.accent
 
     AnimatedVisibility(
         visibleState = visibilityState,
@@ -122,7 +130,7 @@ fun NuvioFloatingPrompt(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = navBarBottom + NuvioTokens.Space.s72)
+                .padding(bottom = aboveNavBar)
                 .padding(horizontal = tokens.spacing.screenHorizontal)
                 .offset { IntOffset(0, dragOffsetY.value.roundToInt().coerceAtLeast(0)) }
                 .pointerInput(Unit) {
@@ -165,12 +173,39 @@ fun NuvioFloatingPrompt(
                 },
             contentAlignment = Alignment.BottomCenter,
         ) {
-            Surface(
-                modifier = Modifier.onSizeChanged { promptHeightPx = it.height },
-                shape = tokens.shapes.card,
-                color = tokens.colors.surfacePopover,
-                tonalElevation = tokens.elevation.playerControls,
-                shadowElevation = tokens.elevation.modal,
+            // Themed card instead of the default grey: Liquid glass = translucent glass with a
+            // light rim, AMOLED = pure black with an accent-tinted edge.
+            val cardShape = tokens.shapes.card
+            val glassActive = glassStyle && isAmbientLiquidGlassActive()
+            val cardModifier = when {
+                glassActive -> Modifier
+                    .shadow(tokens.elevation.modal, cardShape)
+                    .ambientLiquidGlass(
+                        shape = cardShape,
+                        tint = Color.Black.copy(alpha = 0.35f),
+                        fallback = Color.Black.copy(alpha = 0.72f),
+                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.18f), cardShape)
+                glassStyle -> Modifier
+                    .shadow(tokens.elevation.modal, cardShape)
+                    .clip(cardShape)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.06f)),
+                        ),
+                    )
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .border(1.dp, Color.White.copy(alpha = 0.22f), cardShape)
+                else -> Modifier
+                    .shadow(tokens.elevation.modal, cardShape, ambientColor = accent, spotColor = accent)
+                    .clip(cardShape)
+                    .background(Color.Black)
+                    .border(1.dp, accent.copy(alpha = 0.45f), cardShape)
+            }
+            Box(
+                modifier = Modifier
+                    .onSizeChanged { promptHeightPx = it.height }
+                    .then(cardModifier),
             ) {
                 Column(
                     modifier = Modifier.padding(tokens.spacing.cardPaddingCompact),

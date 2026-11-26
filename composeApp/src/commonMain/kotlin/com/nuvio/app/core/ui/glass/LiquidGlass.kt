@@ -1,6 +1,7 @@
 package com.nuvio.app.core.ui.glass
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -54,6 +55,17 @@ import com.kyant.backdrop.shadow.Shadow
 
 object LiquidGlassSettings {
     var enabled: Boolean by mutableStateOf(true)
+}
+
+/**
+ * The navigation bar's glass options (material, edge highlight, shadow, glass halo), applied to
+ * every other glass surface too (sheets, windows, streams screen, player controls, resume card)
+ * so the whole app follows what the user picked for the bar. Kept in sync by
+ * ThemeSettingsRepository.
+ */
+object GlassAppearance {
+    var style: LiquidGlassStyle by mutableStateOf(LiquidGlassStyle.Default)
+    var glow: Boolean by mutableStateOf(true)
 }
 
 fun isLiquidGlassAvailable(): Boolean = isRenderEffectSupported()
@@ -273,11 +285,20 @@ internal fun Modifier.liquidGlassSurface(
     withShadow: Boolean = false,
     fallbackBrush: Brush? = null,
     backdropOpacity: Float = 1f,
-): Modifier =
-    if (backdrop == null || !isLiquidGlassSupported()) {
-        if (fallbackBrush != null) clip(shape).background(fallbackBrush) else clip(shape).background(fallback)
-    } else {
-        drawBackdrop(
+): Modifier {
+    val style = GlassAppearance.style
+    if (backdrop == null || !isLiquidGlassSupported() || !style.usesBackdrop) {
+        return if (fallbackBrush != null) clip(shape).background(fallbackBrush) else clip(shape).background(fallback)
+    }
+    val blurRadius = if (style.usesBlur) blurRadius else 0.dp
+    val refractionHeight = if (style.usesLens) refractionHeight else 0.dp
+    val tint = if (style.material == LiquidGlassMaterial.CLEAR) tint.copy(alpha = tint.alpha * 0.5f) else tint
+    val withVibrancy = withVibrancy && style.vibrancy
+    val withHighlight = withHighlight && style.edgeHighlight
+    val withShadow = withShadow && style.shadow
+    // « Halo de verre »: a soft light rim around the surface, like around the floating bar.
+    val halo = if (GlassAppearance.glow) Modifier.border(1.dp, Color.White.copy(alpha = 0.16f), shape) else Modifier
+    return drawBackdrop(
             backdrop = backdrop,
             shape = { shape },
             effects = {
@@ -298,8 +319,8 @@ internal fun Modifier.liquidGlassSurface(
             } else {
                 null
             },
-        )
-    }
+        ).then(halo)
+}
 
 internal fun Modifier.liquidGlassBlur(
     backdrop: Backdrop?,

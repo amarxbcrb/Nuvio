@@ -131,8 +131,14 @@ internal fun BoxScope.PlayerPlaybackOverlays(
             },
             onDismiss = onDismissSkipInterval,
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = sliderEdgePadding, bottom = overlayBottomPadding),
+                // Right side, on the other side from where it used to be; above the next episode
+                // card when that one shows in the same corner.
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = sliderEdgePadding,
+                    bottom = overlayBottomPadding +
+                        if (isSeries && (showNextEpisodeCard || nextEpisodeAutoPlaySearching || nextEpisodeAutoPlayCountdown != null)) 120.dp else 0.dp,
+                ),
         )
     }
 

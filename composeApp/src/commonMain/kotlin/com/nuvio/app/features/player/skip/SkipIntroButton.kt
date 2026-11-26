@@ -21,7 +21,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import nuvio.composeapp.generated.resources.action_close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -68,11 +82,17 @@ fun SkipIntroButton(
 
     var autoHidden by remember { mutableStateOf(false) }
     var manuallyDismissed by remember { mutableStateOf(false) }
+    // Closed with the × or a swipe: stays hidden for this interval, even when the controls show.
+    var closedByUser by remember { mutableStateOf(false) }
+    val swipeOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
     val progress = remember { Animatable(0f) }
 
     LaunchedEffect(interval?.startTime, interval?.type) {
         autoHidden = false
         manuallyDismissed = false
+        closedByUser = false
+        swipeOffset.snapTo(0f)
         progress.snapTo(0f)
     }
 
@@ -100,7 +120,11 @@ fun SkipIntroButton(
         }
     }
 
-    val isVisible = shouldShow && (!autoHidden || controlsVisible)
+    val isVisible = shouldShow && !closedByUser && (!autoHidden || controlsVisible)
+    val closeButton = {
+        closedByUser = true
+        onDismiss()
+    }
 
     AnimatedVisibility(
         visible = isVisible,
@@ -109,9 +133,20 @@ fun SkipIntroButton(
         modifier = modifier,
     ) {
         val shape = RoundedCornerShape(16.dp)
+        val dismissDistance = with(LocalDensity.current) { 72.dp.toPx() }
         Column(
             modifier = Modifier
                 .width(IntrinsicSize.Max)
+                .offset { IntOffset(swipeOffset.value.roundToInt(), 0) }
+                .graphicsLayer { alpha = 1f - (abs(swipeOffset.value) / (dismissDistance * 2f)).coerceIn(0f, 0.7f) }
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state = rememberDraggableState { delta -> scope.launch { swipeOffset.snapTo(swipeOffset.value + delta) } },
+                    onDragStopped = {
+                        if (abs(swipeOffset.value) > dismissDistance) closeButton()
+                        else swipeOffset.animateTo(0f, tween(180))
+                    },
+                )
                 .clip(shape)
                 .ambientLiquidGlass(
                     shape = shape,
@@ -139,6 +174,22 @@ fun SkipIntroButton(
                     fontSize = 14.sp,
                     modifier = Modifier.padding(start = 8.dp),
                 )
+                Box(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.14f))
+                        .clickable(onClick = closeButton),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(Res.string.action_close),
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
             Box(
                 modifier = Modifier

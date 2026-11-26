@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.SwitchDefaults
@@ -201,6 +202,18 @@ internal object CloudStreamSettingsListState {
     /** Removes every listed source of [language] (all repositories); returns how many. */
     fun removeLanguage(language: String): Int {
         val targets = shownPlugins.filter { it.metadata.language?.trim()?.lowercase() == language }
+        targets.forEach { if (it.isInstalled) CloudStreamRepository.removePlugin(it.metadata.id.value) }
+        hiddenPluginIds = hiddenPluginIds + targets.map { it.metadata.id.value }
+        persistHidden()
+        return targets.size
+    }
+
+    /**
+     * Removes the listed sources of [ids] (keep = false), or every listed source except [ids]
+     * (keep = true). Installed ones are uninstalled, all are hidden; returns how many were removed.
+     */
+    fun applyKeepOrRemove(ids: Set<String>, keep: Boolean): Int {
+        val targets = shownPlugins.filter { (it.metadata.id.value in ids) != keep }
         targets.forEach { if (it.isInstalled) CloudStreamRepository.removePlugin(it.metadata.id.value) }
         hiddenPluginIds = hiddenPluginIds + targets.map { it.metadata.id.value }
         persistHidden()
@@ -635,38 +648,92 @@ internal fun CloudStreamSettingsSection() {
                     }
                 },
             )
-            // Remove every source of one language, across all repositories.
-            var languageToRemove by remember { mutableStateOf<String?>(null) }
-            val sourceLanguages = CloudStreamSettingsListState.sourceLanguages
-            if (sourceLanguages.isNotEmpty()) {
+            // Sort the sources one by one: either tick the ones to keep (the others are removed)
+            // or tick the ones to remove. A language entry ticks all its sources at once.
+            val shown = CloudStreamSettingsListState.shownPlugins
+            if (shown.isNotEmpty()) {
+                var keepMode by remember { mutableStateOf(false) }
+                var pickedState by remember { mutableStateOf<Set<String>>(emptySet()) }
+                var confirmSort by remember { mutableStateOf(false) }
+                val shownIds = shown.map { it.metadata.id.value }.toSet()
+                // Only extensions still listed count (some may have been removed meanwhile).
+                val picked = pickedState intersect shownIds
                 Spacer(Modifier.height(16.dp))
-                NuvioDropdownField(
-                    label = copy.removeByLanguageLabel,
-                    valueLabel = copy.removeByLanguageHint,
-                    options = sourceLanguages.map { (code, count) ->
-                        NuvioSelectOption(code, "${listOfNotNull(languageFlag(code), streamLanguageDisplayName(code)).joinToString(" ")} ($count)")
-                    },
-                    selectedKeys = emptySet(),
-                    onSelect = { option -> languageToRemove = option.key },
-                )
-            }
-            languageToRemove?.let { code ->
-                val count = sourceLanguages.firstOrNull { it.first == code }?.second ?: 0
-                DialogSurface(
-                    onDismissRequest = { languageToRemove = null },
-                    title = copy.removeLanguageConfirmTitle(streamLanguageDisplayName(code), count),
-                    message = copy.removeLanguageConfirmMessage,
-                ) {
-                    DialogButtons {
-                        DialogButton(text = copy.cancel, onClick = { languageToRemove = null })
-                        DialogButton(
-                            text = copy.tileRemove,
-                            style = DialogButtonStyle.Destructive,
-                            onClick = {
-                                languageToRemove = null
-                                message = copy.languageRemoved(CloudStreamSettingsListState.removeLanguage(code))
-                            },
+                Text(copy.sortTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(false to copy.sortRemoveMode, true to copy.sortKeepMode).forEach { (mode, label) ->
+                        FilterChip(
+                            selected = keepMode == mode,
+                            onClick = { keepMode = mode },
+                            label = { Text(label) },
                         )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                val byLanguage = shown.groupBy { it.metadata.language?.trim()?.lowercase()?.takeIf(String::isNotEmpty) }
+                val languageOptions = byLanguage.keys.filterNotNull().sortedBy { streamLanguageDisplayName(it).lowercase() }
+                NuvioDropdownField(
+                    label = copy.sortByLanguageLabel,
+                    valueLabel = copy.sortByLanguageHint,
+                    options = languageOptions.map { code ->
+                        NuvioSelectOption(
+                            code,
+                            "${listOfNotNull(languageFlag(code), streamLanguageDisplayName(code)).joinToString(" ")} (${byLanguage[code].orEmpty().size})",
+                        )
+                    },
+                    selectedKeys = languageOptions.filter { code ->
+                        byLanguage[code].orEmpty().all { it.metadata.id.value in picked }
+                    }.toSet(),
+                    multiSelect = true,
+                    onSelect = { option ->
+                        val ids = byLanguage[option.key].orEmpty().map { it.metadata.id.value }.toSet()
+                        pickedState = if (picked.containsAll(ids)) picked - ids else picked + ids
+                    },
+                )
+                Spacer(Modifier.height(8.dp))
+                NuvioDropdownField(
+                    label = if (keepMode) copy.sortKeepMode else copy.sortRemoveMode,
+                    valueLabel = if (picked.isEmpty()) copy.sortPickHint else copy.sortPickedCount(picked.size),
+                    options = shown
+                        .sortedBy { it.metadata.name.lowercase() }
+                        .map { plugin ->
+                            val flag = plugin.metadata.language?.let(::languageFlag)
+                            NuvioSelectOption(plugin.metadata.id.value, listOfNotNull(flag, plugin.metadata.name).joinToString(" "))
+                        },
+                    selectedKeys = picked,
+                    multiSelect = true,
+                    onSelect = { option ->
+                        pickedState = if (option.key in picked) picked - option.key else picked + option.key
+                    },
+                )
+                val toRemove = if (keepMode) shownIds.size - picked.size else picked.size
+                Spacer(Modifier.height(8.dp))
+                NuvioPrimaryButton(
+                    text = if (keepMode) copy.sortKeepAction(picked.size, toRemove) else copy.sortRemoveAction(toRemove),
+                    enabled = picked.isNotEmpty() && toRemove > 0,
+                    onClick = { confirmSort = true },
+                )
+                if (confirmSort) {
+                    DialogSurface(
+                        onDismissRequest = { confirmSort = false },
+                        title = copy.sortConfirmTitle(toRemove),
+                        message = copy.removeLanguageConfirmMessage,
+                    ) {
+                        DialogButtons {
+                            DialogButton(text = copy.cancel, onClick = { confirmSort = false })
+                            DialogButton(
+                                text = copy.tileRemove,
+                                style = DialogButtonStyle.Destructive,
+                                onClick = {
+                                    confirmSort = false
+                                    message = copy.languageRemoved(
+                                        CloudStreamSettingsListState.applyKeepOrRemove(picked, keepMode),
+                                    )
+                                    pickedState = emptySet()
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -1478,6 +1545,26 @@ private class CloudStreamSettingsCopy private constructor(
     )
     val removeByLanguageLabel: String = text(
         english = "Remove all sources of a language", french = "Supprimer toutes les sources d’une langue", turkish = "Bir dilin tüm kaynaklarını sil",
+    )
+    val sortTitle: String = text(english = "Sort extensions", french = "Trier les extensions", turkish = "Eklentileri ayıkla")
+    val sortKeepMode: String = text(english = "Extensions to keep", french = "Extensions à garder", turkish = "Tutulacak eklentiler")
+    val sortRemoveMode: String = text(english = "Extensions to remove", french = "Extensions à supprimer", turkish = "Silinecek eklentiler")
+    val sortByLanguageLabel: String = text(english = "Tick a whole language", french = "Cocher toute une langue", turkish = "Tüm dili seç")
+    val sortByLanguageHint: String = text(english = "Choose one or more languages", french = "Choisir une ou plusieurs langues", turkish = "Bir veya daha fazla dil seç")
+    val sortPickHint: String = text(english = "Tick extensions one by one", french = "Cocher les extensions une par une", turkish = "Eklentileri tek tek seç")
+    fun sortPickedCount(count: Int): String = text(
+        english = "$count selected", french = "$count sélectionnée(s)", turkish = "$count seçildi",
+    )
+    fun sortKeepAction(kept: Int, removed: Int): String = text(
+        english = "Keep $kept, remove the $removed others",
+        french = "Garder $kept, supprimer les $removed autres",
+        turkish = "$kept tut, diğer $removed sil",
+    )
+    fun sortRemoveAction(count: Int): String = text(
+        english = "Remove $count extensions", french = "Supprimer $count extensions", turkish = "$count eklenti sil",
+    )
+    fun sortConfirmTitle(count: Int): String = text(
+        english = "Remove $count extensions?", french = "Supprimer $count extensions ?", turkish = "$count eklenti silinsin mi?",
     )
     val removeByLanguageHint: String = text(english = "Choose a language", french = "Choisir une langue", turkish = "Dil seç")
     val removeLanguageConfirmMessage: String = text(
