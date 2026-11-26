@@ -2974,4 +2974,18 @@
     <string name="library_category_create">Create</string>
     <string name="library_category_delete">Delete category</string>
     <string name="library_category_new_hint">New category</string>
+    <string name="settings_liquid_glass_title">Liquid glass</string>
+    <string name="settings_liquid_glass_row_description">Material, halo, blur and the screens it applies to</string>
+    <string name="settings_liquid_glass_apply_to">Apply to</string>
+    <string name="settings_liquid_glass_apply_to_hint">Unticked screens keep their plain look.</string>
+    <string name="settings_liquid_glass_surface_nav">Navigation bar</string>
+    <string name="settings_liquid_glass_surface_home">Home</string>
+    <string name="settings_liquid_glass_surface_sources">Source selection</string>
+    <string name="settings_liquid_glass_surface_player">Player and its panels</string>
+    <string name="settings_liquid_glass_surface_popups">Sheets and popups</string>
+    <string name="settings_liquid_glass_inactive">Choose the Liquid glass style in Appearance to see these effects.</string>
+    <string name="player_episode_play_on">Play on %1$s</string>
+    <string name="player_episode_choose_source">Choose a source</string>
+    <string name="links_other_sources">%1$d other sources</string>
+    <string name="streams_hero_episode_overline">Season %1$d · Episode %2$d</string>
 </resources>

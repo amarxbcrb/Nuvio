@@ -64,6 +64,7 @@ internal fun Modifier.nuvioSheetSurface(
         refractionHeight = 16.dp,
         refractionAmount = 32.dp,
         withHighlight = withHighlight,
+        surface = com.nuvio.app.core.ui.glass.GlassSurface.POPUPS,
     )
 }
 
@@ -121,7 +122,8 @@ fun NuvioModalBottomSheet(
                 onDispose { sheetBackdrop.activeSheets -= 1 }
             }
         }
-        val sheetGlassReady = sheetBackdrop != null && sheetBackdrop.backdrop.isReady && isLiquidGlassSupported()
+        val sheetGlassReady = sheetBackdrop != null && sheetBackdrop.backdrop.isReady && isLiquidGlassSupported() &&
+            com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.POPUPS)
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
@@ -131,7 +133,10 @@ fun NuvioModalBottomSheet(
             scrimColor = tokens.colors.overlayScrim,
             dragHandle = null,
         ) {
-            CompositionLocalProvider(LocalBottomInsetsConsumed provides true) {
+            CompositionLocalProvider(
+                LocalBottomInsetsConsumed provides true,
+                com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.POPUPS,
+            ) {
                 Column(
                     modifier = modifier
                         .padding(NuvioTokens.Space.s10)

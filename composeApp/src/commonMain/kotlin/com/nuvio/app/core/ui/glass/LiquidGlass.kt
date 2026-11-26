@@ -57,15 +57,37 @@ object LiquidGlassSettings {
     var enabled: Boolean by mutableStateOf(true)
 }
 
+/** Screens the Liquid glass settings can be applied to (« Appliquer à » in the settings). */
+enum class GlassSurface(val key: String) {
+    NAVIGATION_BAR("nav"),
+    HOME("home"),
+    SOURCES("sources"),
+    PLAYER("player"),
+    POPUPS("popups"),
+    ;
+
+    companion object {
+        fun fromKey(key: String): GlassSurface? = entries.firstOrNull { it.key == key }
+    }
+}
+
 /**
- * The navigation bar's glass options (material, edge highlight, shadow, glass halo), applied to
- * every other glass surface too (sheets, windows, streams screen, player controls, resume card)
- * so the whole app follows what the user picked for the bar. Kept in sync by
- * ThemeSettingsRepository.
+ * Which screen the glass below belongs to. Screens provide it at their root; surfaces that are
+ * not inside one of the listed screens (null) always follow the Liquid glass style.
+ */
+val LocalGlassSurface = staticCompositionLocalOf<GlassSurface?> { null }
+
+/**
+ * The one set of Liquid glass settings (material, edge, shadow, glass halo, blur, refraction,
+ * tint) and the screens it applies to. A screen left unticked keeps the plain, opaque look.
+ * Kept in sync by ThemeSettingsRepository.
  */
 object GlassAppearance {
     var style: LiquidGlassStyle by mutableStateOf(LiquidGlassStyle.Default)
     var glow: Boolean by mutableStateOf(true)
+    internal var effects: LiquidGlassEffectSettings by mutableStateOf(LiquidGlassEffectDefaults.floatingBar)
+
+    fun isEnabledFor(surface: GlassSurface?): Boolean = surface == null || surface in style.surfaces
 }
 
 fun isLiquidGlassAvailable(): Boolean = isRenderEffectSupported()
@@ -212,6 +234,7 @@ data class LiquidGlassStyle(
     val edgeHighlight: Boolean = true,
     val shadow: Boolean = true,
     val selectionLens: Boolean = true,
+    val surfaces: Set<GlassSurface> = GlassSurface.entries.toSet(),
 ) {
     val usesBackdrop: Boolean
         get() = material != LiquidGlassMaterial.SOLID
@@ -229,12 +252,16 @@ data class LiquidGlassStyle(
         edgeHighlight.encodeFlag(),
         shadow.encodeFlag(),
         selectionLens.encodeFlag(),
+        surfaces.joinToString(SurfaceSeparator) { it.key }.ifEmpty { NoSurface },
     ).joinToString(Separator)
 
     companion object {
         val Default = LiquidGlassStyle()
 
-        private const val EncodingVersion = "2"
+        private const val EncodingVersion = "3"
+        private const val SurfacesEncodingVersion = "2"
+        private const val SurfaceSeparator = ","
+        private const val NoSurface = "-"
         private const val LegacyEncodingVersion = "1"
         internal const val Separator = ";"
 
@@ -242,7 +269,7 @@ data class LiquidGlassStyle(
             if (raw.isNullOrBlank()) return Default
             val parts = raw.split(Separator)
             val (vibrancyAt, highlightAt, shadowAt, lensAt) = when (parts.firstOrNull()) {
-                EncodingVersion -> listOf(2, 3, 4, 5)
+                EncodingVersion, SurfacesEncodingVersion -> listOf(2, 3, 4, 5)
                 LegacyEncodingVersion -> listOf(5, 7, 8, 9)
                 else -> return Default
             }
@@ -258,6 +285,15 @@ data class LiquidGlassStyle(
                 edgeHighlight = flag(highlightAt, Default.edgeHighlight),
                 shadow = flag(shadowAt, Default.shadow),
                 selectionLens = flag(lensAt, Default.selectionLens),
+                surfaces = if (parts.firstOrNull() == EncodingVersion) {
+                    parts.getOrNull(6)
+                        ?.split(SurfaceSeparator)
+                        ?.mapNotNull(GlassSurface::fromKey)
+                        ?.toSet()
+                        ?: Default.surfaces
+                } else {
+                    Default.surfaces
+                },
             )
         }
 
@@ -285,14 +321,25 @@ internal fun Modifier.liquidGlassSurface(
     withShadow: Boolean = false,
     fallbackBrush: Brush? = null,
     backdropOpacity: Float = 1f,
+    surface: GlassSurface? = null,
 ): Modifier {
     val style = GlassAppearance.style
-    if (backdrop == null || !isLiquidGlassSupported() || !style.usesBackdrop) {
+    if (backdrop == null || !isLiquidGlassSupported() || !style.usesBackdrop || !GlassAppearance.isEnabledFor(surface)) {
         return if (fallbackBrush != null) clip(shape).background(fallbackBrush) else clip(shape).background(fallback)
     }
-    val blurRadius = if (style.usesBlur) blurRadius else 0.dp
-    val refractionHeight = if (style.usesLens) refractionHeight else 0.dp
-    val tint = if (style.material == LiquidGlassMaterial.CLEAR) tint.copy(alpha = tint.alpha * 0.5f) else tint
+    // The navigation bar draws its own effects; every other surface keeps its proportions and
+    // follows the user's blur, refraction and tint sliders.
+    val effects = GlassAppearance.effects
+    val defaults = LiquidGlassEffectDefaults.floatingBar
+    val scaled = surface != GlassSurface.NAVIGATION_BAR
+    fun ratio(value: Float, default: Float): Float = if (scaled && default > 0f) (value / default) else 1f
+    val blurRadius = if (style.usesBlur) blurRadius * ratio(effects.blurRadiusDp, defaults.blurRadiusDp) else 0.dp
+    val refractionHeight = if (style.usesLens) refractionHeight * ratio(effects.refractionHeightDp, defaults.refractionHeightDp) else 0.dp
+    val refractionAmount = refractionAmount * ratio(effects.refractionAmountDp, defaults.refractionAmountDp)
+    val tintScale = ratio(effects.tintOpacity, defaults.tintOpacity)
+    val tint = tint.copy(
+        alpha = (tint.alpha * tintScale * if (style.material == LiquidGlassMaterial.CLEAR) 0.5f else 1f).coerceIn(0f, 1f),
+    )
     val withVibrancy = withVibrancy && style.vibrancy
     val withHighlight = withHighlight && style.edgeHighlight
     val withShadow = withShadow && style.shadow
@@ -340,6 +387,7 @@ internal fun Modifier.liquidGlassBlur(
 
 @Composable
 internal fun isAmbientLiquidGlassActive(): Boolean {
+    if (!GlassAppearance.isEnabledFor(LocalGlassSurface.current)) return false
     val backdrop = LocalLiquidGlassBackdrop.current ?: return false
     val host = backdrop as? LiquidGlassBackdropHost
     return isLiquidGlassSupported() && (host?.isReady ?: true)
@@ -382,5 +430,14 @@ internal fun Modifier.ambientLiquidGlass(
         withShadow = withShadow,
         fallbackBrush = fallbackBrush,
         backdropOpacity = backdropOpacity,
+        surface = LocalGlassSurface.current,
     )
 }
+
+/** The bar's look: the Liquid glass settings when « Barre de navigation » is ticked, else plain. */
+fun LiquidGlassStyle.forNavigationBar(): LiquidGlassStyle =
+    if (GlassSurface.NAVIGATION_BAR in surfaces) this else copy(material = LiquidGlassMaterial.SOLID, selectionLens = false)
+
+/** The glass halo of the bar, only while the Liquid glass settings apply to the bar. */
+fun LiquidGlassStyle.navigationBarGlow(glowEnabled: Boolean): Boolean =
+    glowEnabled && GlassSurface.NAVIGATION_BAR in surfaces

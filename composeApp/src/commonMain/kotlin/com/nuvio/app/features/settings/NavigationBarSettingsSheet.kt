@@ -2,8 +2,12 @@ package com.nuvio.app.features.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.drawBehind
+import com.nuvio.app.core.ui.glass.GlassSurface
 import com.nuvio.app.core.ui.glass.LiquidGlassMaterial
+import androidx.compose.material3.Checkbox
 import com.nuvio.app.core.ui.glass.LiquidGlassStyle
 import com.nuvio.app.core.ui.glass.isLiquidGlassSupported
 import com.nuvio.app.core.ui.glass.isLiquidRefractionSupported
@@ -256,33 +260,7 @@ internal fun NavigationBarSettingsSheet(
                     }
                 }
             }
-            item {
-                AnimatedVisibility(floatingNavigationGlowSupported && selectedStyle != NavBarStyle.CLASSIC) {
-                    Column {
-                        NuvioBottomSheetDivider()
-                        SettingsSwitchRow(
-                            title = stringResource(Res.string.settings_nav_bar_glow),
-                            description = stringResource(Res.string.settings_nav_bar_glow_description),
-                            checked = glowEnabled,
-                            isTablet = isTablet,
-                            onCheckedChange = onGlowChanged,
-                        )
-                    }
-                }
-            }
-            item {
-                AnimatedVisibility(isLiquidGlassSupported() && selectedStyle != NavBarStyle.CLASSIC) {
-                    NavigationBarGlassSettings(
-                        style = glassStyle,
-                        onStyleChanged = onGlassStyleChanged,
-                        floatingBarEffects = floatingBarEffects,
-                        onFloatingBarEffectsChanged = onFloatingBarEffectsChanged,
-                        selectionLensEffects = selectionLensEffects,
-                        onSelectionLensEffectsChanged = onSelectionLensEffectsChanged,
-                        isTablet = isTablet,
-                    )
-                }
-            }
+            // The glass options (halo, material, effects) moved to the Liquid glass settings sheet.
             item {
                 NuvioPrimaryButton(
                     text = stringResource(Res.string.action_done),
@@ -570,6 +548,7 @@ private fun NavigationBarPreviewStickyHeader(
     defaultIconColorEnabled: Boolean,
     defaultIconColor: Int,
     glassStyle: LiquidGlassStyle,
+    title: String? = null,
 ) {
     var bounceTrigger by remember { mutableIntStateOf(0) }
     var bounceDirection by remember { mutableStateOf(0f) }
@@ -591,18 +570,23 @@ private fun NavigationBarPreviewStickyHeader(
 
     // Keep the pinned preview opaque during scrolling while matching the shared sheet blur and tint.
     // The gate emits a one-shot request at each top-boundary crossing for the preview bar's JellyMotion springs.
+    // Opaque so the rows that scroll under the pinned preview never show through it (they were
+    // read cut in half, « Changer la couleur des icônes » under « Touchez la barre… »).
     Column(
         Modifier
             .fillMaxWidth()
-            .nuvioSheetSurface(
-                backdrop = sheetBackdrop,
-                shape = RectangleShape,
-                containerColor = sheetContainerColor,
-                withHighlight = false,
-            ),
+            .background(sheetContainerColor.copy(alpha = 1f))
+            .drawBehind {
+                drawRect(
+                    color = Color.White.copy(alpha = 0.10f),
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 1.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx()),
+                )
+            }
+            .padding(bottom = 8.dp),
     ) {
         Text(
-            text = stringResource(Res.string.settings_appearance_nav_bar_style),
+            text = title ?: stringResource(Res.string.settings_appearance_nav_bar_style),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -728,3 +712,146 @@ internal fun LiquidGlassEffectSlider(
         )
     }
 }
+
+
+/**
+ * « Liquid glass »: the one set of glass settings of the app (glass halo, material, edge, blur,
+ * refraction, tint, shadow, selection lens) and, at the top, the screens it applies to. A screen
+ * left unticked keeps its plain look. The pinned preview shows the navigation bar live.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+internal fun LiquidGlassSettingsSheet(
+    isTablet: Boolean,
+    tabletLayout: Boolean,
+    selectedStyle: NavBarStyle,
+    selectedPosition: NavBarPosition,
+    glowEnabled: Boolean,
+    onGlowChanged: (Boolean) -> Unit,
+    defaultIconColorEnabled: Boolean,
+    defaultIconColor: Int,
+    floatingBarEffects: LiquidGlassEffectSettings,
+    onFloatingBarEffectsChanged: (LiquidGlassEffectSettings) -> Unit,
+    selectionLensEffects: LiquidGlassEffectSettings,
+    onSelectionLensEffectsChanged: (LiquidGlassEffectSettings) -> Unit,
+    onSaveLiquidGlassEffectSettings: () -> Unit,
+    glassStyle: LiquidGlassStyle,
+    onGlassStyleChanged: (LiquidGlassStyle) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    val dismiss: () -> Unit = {
+        onSaveLiquidGlassEffectSettings()
+        scope.launch { dismissNuvioBottomSheet(sheetState, onDismiss) }
+    }
+    val listState = rememberLazyListState()
+    NuvioModalBottomSheet(onDismissRequest = dismiss, sheetState = sheetState) {
+        LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
+            stickyHeader(key = "liquid-glass-preview") {
+                NavigationBarPreviewStickyHeader(
+                    listState = listState,
+                    selectedStyle = selectedStyle,
+                    isTablet = isTablet,
+                    glowEnabled = glowEnabled,
+                    selectedPosition = selectedPosition,
+                    tabletLayout = tabletLayout,
+                    floatingBarEffects = floatingBarEffects,
+                    selectionLensEffects = selectionLensEffects,
+                    defaultIconColorEnabled = defaultIconColorEnabled,
+                    defaultIconColor = defaultIconColor,
+                    glassStyle = glassStyle,
+                    title = stringResource(Res.string.settings_liquid_glass_title),
+                )
+            }
+            if (!isLiquidGlassSupported()) {
+                item(key = "inactive") {
+                    Text(
+                        text = stringResource(Res.string.settings_liquid_glass_inactive),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    )
+                }
+            }
+            item(key = "apply-to") {
+                Column {
+                    Text(
+                        text = stringResource(Res.string.settings_liquid_glass_apply_to),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.settings_liquid_glass_apply_to_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 4.dp),
+                    )
+                    GlassSurface.entries.forEach { surface ->
+                        val checked = surface in glassStyle.surfaces
+                        NuvioBottomSheetActionRow(
+                            title = stringResource(surface.labelRes),
+                            onClick = {
+                                onGlassStyleChanged(
+                                    glassStyle.copy(
+                                        surfaces = if (checked) glassStyle.surfaces - surface else glassStyle.surfaces + surface,
+                                    ),
+                                )
+                            },
+                            modifier = Modifier.semantics {
+                                role = Role.Checkbox
+                                selected = checked
+                            },
+                            trailingContent = {
+                                Checkbox(checked = checked, onCheckedChange = null)
+                            },
+                        )
+                    }
+                }
+            }
+            if (floatingNavigationGlowSupported) {
+                item(key = "glow") {
+                    Column {
+                        NuvioBottomSheetDivider()
+                        SettingsSwitchRow(
+                            title = stringResource(Res.string.settings_nav_bar_glow),
+                            description = stringResource(Res.string.settings_nav_bar_glow_description),
+                            checked = glowEnabled,
+                            isTablet = isTablet,
+                            onCheckedChange = onGlowChanged,
+                        )
+                    }
+                }
+            }
+            item(key = "glass") {
+                NavigationBarGlassSettings(
+                    style = glassStyle,
+                    onStyleChanged = onGlassStyleChanged,
+                    floatingBarEffects = floatingBarEffects,
+                    onFloatingBarEffectsChanged = onFloatingBarEffectsChanged,
+                    selectionLensEffects = selectionLensEffects,
+                    onSelectionLensEffectsChanged = onSelectionLensEffectsChanged,
+                    isTablet = isTablet,
+                )
+            }
+            item(key = "done") {
+                NuvioPrimaryButton(
+                    text = stringResource(Res.string.action_done),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                    onClick = dismiss,
+                )
+            }
+        }
+    }
+}
+
+private val GlassSurface.labelRes: StringResource
+    get() = when (this) {
+        GlassSurface.NAVIGATION_BAR -> Res.string.settings_liquid_glass_surface_nav
+        GlassSurface.HOME -> Res.string.settings_liquid_glass_surface_home
+        GlassSurface.SOURCES -> Res.string.settings_liquid_glass_surface_sources
+        GlassSurface.PLAYER -> Res.string.settings_liquid_glass_surface_player
+        GlassSurface.POPUPS -> Res.string.settings_liquid_glass_surface_popups
+    }

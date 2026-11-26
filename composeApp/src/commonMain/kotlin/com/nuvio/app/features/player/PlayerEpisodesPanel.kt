@@ -1,6 +1,21 @@
 package com.nuvio.app.features.player
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
+import nuvio.composeapp.generated.resources.player_episode_play_on
+import nuvio.composeapp.generated.resources.player_episode_choose_source
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -97,26 +112,36 @@ fun PlayerEpisodesPanel(
         visible = visible,
         onDismiss = onDismiss,
         modifier = modifier,
+        floating = true,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(start = 22.dp, end = 22.dp, top = 20.dp),
         ) {
-            PlayerPanelHeader(
-                title = if (episodeStreamsState.showStreams) {
-                    stringResource(Res.string.compose_player_panel_streams)
-                } else {
-                    stringResource(Res.string.compose_player_panel_episodes)
-                },
-            ) {
-                PlayerDialogButton(
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (episodeStreamsState.showStreams) {
+                        stringResource(Res.string.compose_player_panel_streams)
+                    } else {
+                        stringResource(Res.string.compose_player_panel_episodes)
+                    },
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                EpisodesGlassCircleButton(
+                    icon = Icons.Rounded.Close,
                     label = stringResource(Res.string.action_close),
+                    size = 44.dp,
                     onClick = onDismiss,
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
 
             if (episodeStreamsState.showStreams) {
                 EpisodeStreamsPanelContent(
@@ -226,11 +251,17 @@ private fun EpisodesListPanelContent(
 
     Column(modifier = modifier) {
         if (availableSeasons.isNotEmpty()) {
+            // Segmented control, as on iOS: one track, the selected season is a white pill.
+            val segmentShape = RoundedCornerShape(percent = 50)
             LazyRow(
                 state = seasonListState,
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(segmentShape)
+                    .background(Color.White.copy(alpha = 0.07f))
+                    .border(1.dp, Color.White.copy(alpha = 0.12f), segmentShape)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 items(availableSeasons, key = { it }) { season ->
                     EpisodeSeasonChip(
@@ -244,10 +275,15 @@ private fun EpisodesListPanelContent(
                             selectedSeason = season
                             onSeasonSelected(season)
                         },
+                        modifier = if (availableSeasons.size <= 4) {
+                            Modifier.fillParentMaxWidth(1f / availableSeasons.size)
+                        } else {
+                            Modifier.width(116.dp)
+                        },
                     )
                 }
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
         }
 
         if (seasonEpisodes.isEmpty()) {
@@ -308,30 +344,66 @@ private fun EpisodeSeasonChip(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val tokens = MaterialTheme.nuvio
-    val shape = RoundedCornerShape(24.dp)
-
+    val shape = RoundedCornerShape(percent = 50)
+    val background by animateColorAsState(
+        if (isSelected) Color(0xFFF2F2F7) else Color.Transparent,
+        tween(220),
+        label = "season_segment",
+    )
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(shape)
-            .background(if (isSelected) Color(0xFFF5F5F5) else tokens.colors.surfaceCard)
-            .border(
-                1.dp,
-                if (isSelected) Color.Transparent else tokens.colors.borderDefault,
-                shape,
-            )
+            .background(background)
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (isSelected) Color.Black else tokens.colors.textSecondary,
-            style = MaterialTheme.typography.labelLarge,
+            color = if (isSelected) Color.Black else Color.White.copy(alpha = 0.78f),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
 
+/** Round glass button of the panel (close, play). */
+@Composable
+private fun EpisodesGlassCircleButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    size: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit,
+    iconSize: androidx.compose.ui.unit.Dp = 22.dp,
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.08f)),
+                ),
+            )
+            .border(1.dp, Color.White.copy(alpha = 0.20f), CircleShape)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(iconSize))
+    }
+}
+
+/**
+ * An episode, as in the Apple TV app: artwork with « E2 », title, date, two lines of summary and
+ * the source it will play on (« Lire sur Movix »), then a round play button. The play button
+ * starts the episode on that source right away; the card opens the list of sources. Without a
+ * known source, both open the list (« Choisir une source »).
+ */
 @Composable
 private fun EpisodeRow(
     episode: MetaVideo,
@@ -342,49 +414,46 @@ private fun EpisodeRow(
     sameSourceName: String? = null,
     onPlayFromSameSource: () -> Unit = {},
 ) {
-    val tokens = MaterialTheme.nuvio
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(26.dp)
     val shouldBlurArtwork = blurUnwatchedEpisodes && !isWatched
     val playingDescription = stringResource(Res.string.compose_player_playing)
-    val episodeCode = when {
-        episode.season != null && episode.episode != null -> stringResource(
-            Res.string.compose_player_episode_code_full,
-            episode.season,
-            episode.episode,
-        )
-        episode.episode != null -> stringResource(
-            Res.string.compose_player_episode_code_episode_only,
-            episode.episode,
-        )
-        else -> null
+    val episodeCode = episode.episode?.let {
+        stringResource(Res.string.compose_player_episode_code_episode_only, it)
+    }
+    val playLabel = if (sameSourceName != null) {
+        stringResource(Res.string.player_episode_play_on, sameSourceName)
+    } else {
+        stringResource(Res.string.player_episode_choose_source)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(cardShape)
-            .background(tokens.colors.surfaceCard)
-            .then(
-                if (isCurrent) {
-                    Modifier.border(width = 2.dp, color = tokens.colors.focusRing, shape = cardShape)
-                } else {
-                    Modifier
-                },
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = 0.04f)),
+                ),
+            )
+            .border(
+                width = if (isCurrent) 1.5.dp else 1.dp,
+                color = if (isCurrent) Color.White.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.12f),
+                shape = cardShape,
             )
             .semantics {
                 if (isCurrent) stateDescription = playingDescription
             }
             .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
             modifier = Modifier
-                .width(130.dp)
-                .height(90.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(tokens.colors.surfacePopover),
+                .width(150.dp)
+                .height(92.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color.White.copy(alpha = 0.06f)),
         ) {
             episode.thumbnail?.let { thumbnail ->
                 AsyncImage(
@@ -402,11 +471,12 @@ private fun EpisodeRow(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(8.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color.Black.copy(alpha = 0.75f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
                     color = Color.White,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
             NuvioAnimatedWatchedBadge(
@@ -419,47 +489,76 @@ private fun EpisodeRow(
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(
                 text = episode.title,
-                color = tokens.colors.textPrimary,
+                color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             episode.released?.takeIf { it.isNotBlank() }?.let { released ->
                 Text(
                     text = formatReleaseDateForDisplay(released),
-                    color = tokens.colors.textMuted,
+                    color = Color.White.copy(alpha = 0.55f),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
             episode.overview?.takeIf { it.isNotBlank() }?.let { overview ->
                 Text(
                     text = overview,
-                    color = tokens.colors.textSecondary,
+                    color = Color.White.copy(alpha = 0.72f),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (sameSourceName != null) {
-                // Plays this episode straight from the source of the current one.
+            if (!isCurrent) {
+                // Where the play button starts it: quiet, like a secondary label on iOS.
+                Row(
+                    modifier = Modifier.padding(top = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = if (sameSourceName != null) Icons.Rounded.PlayCircle else Icons.Rounded.Tune,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.55f),
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = playLabel,
+                        color = Color.White.copy(alpha = 0.55f),
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else {
                 Text(
-                    text = "\u25B6  " + stringResource(Res.string.player_episode_same_source, sameSourceName),
-                    color = tokens.colors.textPrimary,
+                    text = playingDescription,
+                    color = Color.White,
                     style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .padding(top = 2.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(tokens.colors.accent.copy(alpha = 0.28f))
-                        .clickable(onClick = onPlayFromSameSource)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(Color.White.copy(alpha = 0.16f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
+        }
+
+        if (!isCurrent) {
+            EpisodesGlassCircleButton(
+                icon = Icons.Rounded.PlayArrow,
+                label = playLabel,
+                size = 52.dp,
+                iconSize = 26.dp,
+                onClick = if (sameSourceName != null) onPlayFromSameSource else onClick,
+            )
         }
     }
 }

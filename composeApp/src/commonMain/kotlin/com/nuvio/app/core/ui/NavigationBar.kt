@@ -157,6 +157,7 @@ fun NuvioNavigationBar(
                 fallback = Color(0xFF1C1C1E).copy(alpha = 0.82f),
                 blurRadius = 24.dp,
                 refractionHeight = 24.dp,
+                surface = com.nuvio.app.core.ui.glass.GlassSurface.NAVIGATION_BAR,
             )
 
         Box(modifier = pillModifier) {

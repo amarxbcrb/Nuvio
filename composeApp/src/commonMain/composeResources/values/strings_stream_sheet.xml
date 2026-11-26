@@ -81,7 +81,7 @@
     <string name="links_hide_sources">Favorites only</string>
     <string name="links_new_profile">New profile</string>
     <string name="links_no_filter">No filter</string>
-    <string name="links_film_source_header">Your source for this title</string>
+    <string name="links_film_source_header">Current source</string>
     <string name="links_change">Change</string>
     <string name="links_film_source">Title source</string>
     <string name="links_others">%1$d others</string>

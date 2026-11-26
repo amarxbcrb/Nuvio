@@ -2043,4 +2043,18 @@
     <string name="library_category_delete">Supprimer la catégorie</string>
     <string name="library_category_new_hint">Nouvelle catégorie</string>
     <string name="streams_search_placeholder">Rechercher une source</string>
+    <string name="settings_liquid_glass_title">Liquid glass</string>
+    <string name="settings_liquid_glass_row_description">Matière, halo, flou et écrans concernés</string>
+    <string name="settings_liquid_glass_apply_to">Appliquer à</string>
+    <string name="settings_liquid_glass_apply_to_hint">Les écrans décochés gardent leur apparence normale.</string>
+    <string name="settings_liquid_glass_surface_nav">Barre de navigation</string>
+    <string name="settings_liquid_glass_surface_home">Accueil</string>
+    <string name="settings_liquid_glass_surface_sources">Sélection des sources</string>
+    <string name="settings_liquid_glass_surface_player">Lecteur et ses panneaux</string>
+    <string name="settings_liquid_glass_surface_popups">Fenêtres et pop-ups</string>
+    <string name="settings_liquid_glass_inactive">Choisissez le style Liquid glass dans Apparence pour voir ces effets.</string>
+    <string name="player_episode_play_on">Lire sur %1$s</string>
+    <string name="player_episode_choose_source">Choisir une source</string>
+    <string name="links_other_sources">%1$d autres sources</string>
+    <string name="streams_hero_episode_overline">Saison %1$d · Épisode %2$d</string>
 </resources>

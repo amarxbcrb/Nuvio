@@ -24,6 +24,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import nuvio.composeapp.generated.resources.links_current
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -88,6 +92,7 @@ import nuvio.composeapp.generated.resources.links_favorites_first
 import nuvio.composeapp.generated.resources.links_film_source_header
 import nuvio.composeapp.generated.resources.links_hide_sources
 import nuvio.composeapp.generated.resources.links_others
+import nuvio.composeapp.generated.resources.links_other_sources
 import nuvio.composeapp.generated.resources.links_profile
 import nuvio.composeapp.generated.resources.links_quality
 import nuvio.composeapp.generated.resources.links_resume_at
@@ -309,6 +314,7 @@ internal fun CompactStreamList(
                         resumeTarget.resolution?.let { append(" · ").append(it) }
                         append(" · ").append(versionShort(resumeTarget.version))
                     },
+                    progress = resumeProgressFraction,
                     onClick = { play(resumeTarget.stream) },
                 )
             }
@@ -316,9 +322,15 @@ internal fun CompactStreamList(
 
         // Profil, qualité, source.
         item(key = "filters") {
+            // One segmented track, as in the mockup: « Français ⌄ | Qualité ⌄ | Source ⌄ ».
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(58.dp)
+                    .linksSurface(RoundedCornerShape(percent = 50))
+                    .padding(5.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 FilterPill(
                     label = stringResource(Res.string.links_profile),
@@ -400,12 +412,13 @@ internal fun CompactStreamList(
                                 filmSourceRevision++
                             },
                         )
+                        // One card: the source's name, its server and badges, Download and Play.
                         LinkGroup {
-                            SourceHeader(name = filmSource.stream.addonName, addonId = filmSource.stream.addonId, count = null)
-                            LinkDivider()
                             LinkRow(
                                 stream = filmSource.stream,
-                                isFilmSource = true,
+                                isFilmSource = false,
+                                headerName = filmSource.stream.addonName,
+                                playFilled = true,
                                 expanded = expandedKey == filmSource.key,
                                 onPlay = { play(filmSource.stream) },
                                 onToggle = { expandedKey = if (expandedKey == filmSource.key) null else filmSource.key },
@@ -425,14 +438,12 @@ internal fun CompactStreamList(
                                 onAction = { quality = null; source = null },
                             )
                         } else {
+                            val count = if (filmSource != null) {
+                                stringResource(Res.string.links_other_sources, listLinks.size)
+                            } else {
+                                stringResource(Res.string.links_count, listLinks.size)
+                            }
                             val parts = buildList {
-                                add(
-                                    if (filmSource != null) {
-                                        stringResource(Res.string.links_others, listLinks.size)
-                                    } else {
-                                        stringResource(Res.string.links_count, listLinks.size)
-                                    },
-                                )
                                 if (activeProfile.hasPreferences) {
                                     add(stringResource(preferences.dubMode.labelRes))
                                     if (pinnedSourceIds.isNotEmpty()) {
@@ -446,16 +457,18 @@ internal fun CompactStreamList(
                                     }
                                 }
                             }
-                            SectionHeader(title = parts.joinToString(" · "))
+                            SectionHeader(title = count, trailing = parts.joinToString(" · ").takeIf { it.isNotEmpty() })
                         }
                     }
                     // One glass card per source: its name and ♥ once, then its links.
-                    val bySource = listLinks.groupBy { it.stream.addonId }
-                    bySource.entries.forEach { (addonId, links) ->
+                    val bySource = listLinks.groupBy { it.stream.addonId }.entries.toList()
+                    bySource.forEachIndexed { index, (addonId, links) ->
                         item(key = "source:$addonId") {
                             SourceCard(
                                 name = links.first().stream.addonName,
                                 addonId = addonId,
+                                isFirst = index == 0,
+                                isLast = index == bySource.lastIndex,
                                 links = links,
                                 filmSource = filmSource,
                                 expandedKey = expandedKey,
@@ -482,19 +495,37 @@ internal fun CompactStreamList(
 private fun versionShort(version: String): String = if (version == "MULTI") "Multi" else version
 
 @Composable
-private fun SectionHeader(title: String, action: String? = null, onAction: (() -> Unit)? = null) {
+private fun SectionHeader(
+    title: String,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
+    trailing: String? = null,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 16.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // « SOURCE ACTUELLE », « 10 AUTRES SOURCES »: small capitals, as on iOS.
         Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp,
             color = Color.White.copy(alpha = 0.62f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (trailing != null) {
+            Text(
+                text = trailing,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.62f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 12.dp),
+            )
+        }
         if (action != null && onAction != null) {
             Text(
                 text = action,
@@ -543,11 +574,18 @@ internal fun Modifier.linksSurface(shape: Shape, accent: Color? = null): Modifie
 
 /** A card holding rows of links. */
 @Composable
-private fun LinkGroup(content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(28.dp)
+private fun LinkGroup(isFirst: Boolean = true, isLast: Boolean = true, content: @Composable () -> Unit) {
+    // Consecutive groups (first … last) read as one card split by hairlines.
+    val shape = RoundedCornerShape(
+        topStart = if (isFirst) 28.dp else 0.dp,
+        topEnd = if (isFirst) 28.dp else 0.dp,
+        bottomStart = if (isLast) 28.dp else 0.dp,
+        bottomEnd = if (isLast) 28.dp else 0.dp,
+    )
     Column(
         modifier = Modifier
-            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .padding(horizontal = 14.dp)
+            .padding(top = if (isFirst) 6.dp else 0.dp, bottom = if (isLast) 6.dp else 0.dp)
             .fillMaxWidth()
             .linksSurface(shape)
             .animateContentSize(),
@@ -566,6 +604,8 @@ private fun LinkDivider() {
 private fun SourceCard(
     name: String,
     addonId: String,
+    isFirst: Boolean,
+    isLast: Boolean,
     links: List<CompactLink>,
     filmSource: CompactLink?,
     expandedKey: String?,
@@ -576,7 +616,8 @@ private fun SourceCard(
     onCopyLink: (StreamItem) -> Unit,
 ) {
     var open by rememberSaveable(addonId) { mutableStateOf(false) }
-    LinkGroup {
+    LinkGroup(isFirst = isFirst, isLast = isLast) {
+        if (!isFirst) LinkDivider()
         SourceHeader(name = name, addonId = addonId, count = links.size, open = open, onToggleOpen = { open = !open })
         AnimatedVisibility(visible = open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column {
@@ -616,22 +657,23 @@ private fun SourceHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (count != null) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(Res.string.links_count, count),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.62f),
+                text = name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+            if (count != null) {
+                Text(
+                    text = stringResource(Res.string.links_count, count),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White.copy(alpha = 0.62f),
+                    maxLines = 1,
+                )
+            }
         }
         FavoriteHeartButton(addonId = addonId, size = 44.dp)
         if (onToggleOpen != null) {
@@ -675,6 +717,9 @@ private fun LinkRow(
     tag: String? = null,
     showDownload: Boolean = true,
     enabled: Boolean = true,
+    /** Source name in bold above the server line (the « Source actuelle » card). */
+    headerName: String? = null,
+    playFilled: Boolean = false,
 ) {
     val tokens = MaterialTheme.nuvio
     val info = remember(stream) { StreamLanguageDetector.detect(stream, cloudStreamProviderLanguages()[stream.addonId]) }
@@ -701,11 +746,25 @@ private fun LinkRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (headerName != null) {
+                    Text(
+                        text = headerName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = if (isFilmSource) "$origin · $currentLabel" else origin,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
+                        text = when {
+                            headerName != null -> listOfNotNull(origin.takeIf { it != headerName }, resolution).joinToString(" · ")
+                            isFilmSource -> "$origin · $currentLabel"
+                            else -> origin
+                        },
+                        style = if (headerName != null) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.titleMedium,
+                        color = if (headerName != null) Color.White.copy(alpha = 0.62f) else Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
@@ -760,8 +819,8 @@ private fun LinkRow(
             RoundLinkButton(
                 icon = Icons.Rounded.PlayArrow,
                 label = stringResource(Res.string.action_play),
-                tint = tokens.colors.accent.copy(alpha = 0.95f).compositeOver(Color.White),
-                container = tokens.colors.accent.copy(alpha = 0.32f),
+                tint = if (playFilled) Color.White else tokens.colors.accent.copy(alpha = 0.95f).compositeOver(Color.White),
+                container = if (playFilled) tokens.colors.accent else tokens.colors.accent.copy(alpha = 0.32f),
                 onClick = onPlay,
             )
         }
@@ -773,7 +832,7 @@ private enum class LinkBadgeTone { Quality, Language, Neutral }
 @Composable
 private fun LinkBadge(text: String, tone: LinkBadgeTone) {
     val (fg, bg) = when (tone) {
-        LinkBadgeTone.Quality -> Color(0xFF8BE0A4) to Color(0xFF2E7D4F).copy(alpha = 0.42f)
+        LinkBadgeTone.Quality -> Color(0xFFF2C46D) to Color(0xFF6B4F1D).copy(alpha = 0.55f)
         LinkBadgeTone.Language -> Color(0xFF9DB8FF) to Color(0xFF2F4F9E).copy(alpha = 0.50f)
         LinkBadgeTone.Neutral -> Color.White.copy(alpha = 0.82f) to Color.White.copy(alpha = 0.10f)
     }
@@ -919,39 +978,64 @@ private fun formatLinkSize(bytes: Long): String {
     }
 }
 
-/** « Reprendre à 10:58 » over « CNCVerse Bridge · 1080p VF ». */
+/**
+ * « Reprendre à 10:58 » over « CNCVerse Bridge · 1080p VF »: a red pill with a soft glow, and
+ * under it how far the episode was watched.
+ */
 @Composable
-private fun PlayButton(title: String, subtitle: String, onClick: () -> Unit) {
+private fun PlayButton(title: String, subtitle: String, progress: Float? = null, onClick: () -> Unit) {
     val tokens = MaterialTheme.nuvio
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 14.dp, vertical = 6.dp)
-            .fillMaxWidth()
-            .nuvioPressScale(pressedScale = 0.97f)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.18f).compositeOver(tokens.colors.accent), tokens.colors.accent),
-                ),
-            )
-            .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(percent = 50))
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(6.dp))
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+    val accent = tokens.colors.accent
+    val pill = RoundedCornerShape(percent = 50)
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(68.dp)
+                .nuvioPressScale(pressedScale = 0.97f)
+                .shadow(elevation = 18.dp, shape = pill, ambientColor = accent, spotColor = accent)
+                .clip(pill)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.White.copy(alpha = 0.16f).compositeOver(accent), lerp(accent, Color.Black, 0.18f)),
+                    ),
+                )
+                .border(1.dp, Color.White.copy(alpha = 0.20f), pill)
+                .clickable(onClick = onClick),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.82f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-        Text(
-            subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.85f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
+        if (progress != null && progress > 0f) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 8.dp, end = 8.dp, top = 12.dp)
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(pill)
+                    .background(Color.White.copy(alpha = 0.14f)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .height(4.dp)
+                        .clip(pill)
+                        .background(accent),
+                )
+            }
+        }
     }
 }
 
@@ -967,18 +1051,18 @@ private fun FilterPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tokens = MaterialTheme.nuvio
     val shape = RoundedCornerShape(percent = 50)
     Row(
         modifier = modifier
-            .height(52.dp)
+            .fillMaxHeight()
             .nuvioPressScale(pressedScale = 0.96f)
-            // Liquid glass tinted by the accent (not a flat fill), so the text stays white and
-            // readable whatever the accent, even white.
-            .linksSurface(shape, accent = if (highlighted) tokens.colors.accent else null)
+            .clip(shape)
+            // A segment of the track: the profile (and a filter in use) is a lighter pill.
+            .background(if (highlighted) Color.White.copy(alpha = 0.16f) else Color.Transparent)
+            .then(if (highlighted) Modifier.border(1.dp, Color.White.copy(alpha = 0.10f), shape) else Modifier)
             .clickable(onClick = onClick)
             .semantics { contentDescription = "$label : $value" }
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 10.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -992,7 +1076,7 @@ private fun FilterPill(
             modifier = Modifier.weight(1f, fill = false),
         )
         Spacer(Modifier.width(4.dp))
-        Icon(Icons.Rounded.UnfoldMore, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(18.dp))
+        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(18.dp))
     }
 }
 
@@ -1007,7 +1091,7 @@ private fun MenuFilterPill(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
+    Box(modifier = modifier.fillMaxHeight()) {
         FilterPill(label = label, value = value, highlighted = highlighted, onClick = { expanded = true })
         Menu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (key, text) ->

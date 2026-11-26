@@ -48,6 +48,9 @@ fun PlayerScreen(
     sourceFilename: String? = null,
     stream: com.nuvio.app.features.streams.StreamItem? = null,
 ) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.PLAYER,
+    ) {
     PlayerScreenContent(
         PlayerScreenArgs(
             profileId = profileId,
@@ -93,4 +96,5 @@ fun PlayerScreen(
             stream = stream,
         )
     )
+}
 }

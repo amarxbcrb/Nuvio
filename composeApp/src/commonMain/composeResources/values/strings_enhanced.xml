@@ -43,7 +43,7 @@
     <string name="extensions_catalog_footnote">Home catalogs are chosen from the Home screen.</string>
     <string name="details_play_source">Source: %1$s</string>
     <string name="details_trailer_action">Trailer</string>
-    <string name="cloudstream_add_repository_placeholder">Repository link to add</string>
+    <string name="cloudstream_add_repository_placeholder">Repository link</string>
     <string name="cloudstream_add_repository_action">Add</string>
     <string name="cloudstream_add_repository_added">Repository %1$s added.</string>
     <string name="cloudstream_add_repository_title">ADD A REPOSITORY</string>

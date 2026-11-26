@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,6 +70,8 @@ internal fun PlayerSidePanel(
     onDismiss: () -> Unit,
     width: Dp = 520.dp,
     modifier: Modifier = Modifier,
+    /** A card that floats away from the edges, rounded on every corner (the episodes panel). */
+    floating: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
@@ -94,7 +97,7 @@ internal fun PlayerSidePanel(
                 ),
         ) {
             val resolvedWidth = minOf(maxWidth, width)
-            val shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
+            val shape = if (floating) RoundedCornerShape(34.dp) else RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
 
             AnimatedVisibility(
                 visible = visible,
@@ -106,14 +109,30 @@ internal fun PlayerSidePanel(
                     modifier = Modifier
                         .width(resolvedWidth)
                         .fillMaxHeight()
+                        .then(
+                            if (floating) {
+                                Modifier
+                                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical))
+                                    .padding(top = 12.dp, bottom = 12.dp, end = 12.dp)
+                            } else {
+                                Modifier
+                            },
+                        )
                         .clip(shape)
                         .ambientLiquidGlass(
                             shape = shape,
-                            tint = tokens.colors.surfaceElevated.copy(alpha = tokens.colors.surfaceElevated.alpha * 0.72f),
-                            fallback = tokens.colors.surfaceElevated,
+                            tint = if (floating) {
+                                Color(0xFF0F1724).copy(alpha = 0.62f)
+                            } else {
+                                tokens.colors.surfaceElevated.copy(alpha = tokens.colors.surfaceElevated.alpha * 0.72f)
+                            },
+                            fallback = if (floating) Color(0xFF111620).copy(alpha = 0.97f) else tokens.colors.surfaceElevated,
                             blurRadius = 28.dp,
                             refractionHeight = 10.dp,
                             refractionAmount = 18.dp,
+                        )
+                        .then(
+                            if (floating) Modifier.border(1.dp, Color.White.copy(alpha = 0.16f), shape) else Modifier,
                         )
                         .clickable(
                             interactionSource = panelInteraction,

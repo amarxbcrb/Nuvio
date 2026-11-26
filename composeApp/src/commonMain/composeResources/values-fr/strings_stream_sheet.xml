@@ -81,7 +81,7 @@
     <string name="links_hide_sources">Favoris seulement</string>
     <string name="links_new_profile">Nouveau profil</string>
     <string name="links_no_filter">Aucun filtre</string>
-    <string name="links_film_source_header">Ta source pour ce film</string>
+    <string name="links_film_source_header">Source actuelle</string>
     <string name="links_change">Changer</string>
     <string name="links_film_source">Source du film</string>
     <string name="links_others">%1$d autres</string>

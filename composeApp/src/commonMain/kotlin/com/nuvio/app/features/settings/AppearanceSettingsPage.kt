@@ -70,6 +70,8 @@ import nuvio.composeapp.generated.resources.settings_appearance_app_icon
 import nuvio.composeapp.generated.resources.settings_appearance_tab_bar_behavior
 import nuvio.composeapp.generated.resources.settings_appearance_tab_bar_behavior_sheet_title
 import nuvio.composeapp.generated.resources.settings_appearance_nav_bar_style
+import nuvio.composeapp.generated.resources.settings_liquid_glass_title
+import nuvio.composeapp.generated.resources.settings_liquid_glass_row_description
 import nuvio.composeapp.generated.resources.settings_nav_bar_glow_on
 import nuvio.composeapp.generated.resources.settings_nav_bar_glow_off
 import nuvio.composeapp.generated.resources.settings_nav_bar_summary
@@ -149,6 +151,7 @@ internal fun LazyListScope.appearanceSettingsContent(
         var showLanguageRestartDialog by remember { mutableStateOf(false) }
         val layoutDirection = LocalLayoutDirection.current
         var showNavBarStyleSheet by remember { mutableStateOf(false) }
+        var showLiquidGlassSheet by remember { mutableStateOf(false) }
         var showTabBarBehaviorSheet by remember { mutableStateOf(false) }
         var showAppIconPicker by remember { mutableStateOf(false) }
         val glowEnabled by ThemeSettingsRepository.navBarGlowEnabled.collectAsStateWithLifecycle()
@@ -201,19 +204,18 @@ internal fun LazyListScope.appearanceSettingsContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.settings_appearance_nav_bar_style),
-                        description = if (floatingNavigationGlowSupported && effectiveNavBarStyle != NavBarStyle.CLASSIC) {
-                            stringResource(
-                                Res.string.settings_nav_bar_summary,
-                                stringResource(effectiveNavBarStyle.labelRes),
-                                stringResource(if (glowEnabled) Res.string.settings_nav_bar_glow_on else Res.string.settings_nav_bar_glow_off),
-                            )
-                        } else {
-                            stringResource(effectiveNavBarStyle.labelRes)
-                        },
+                        description = stringResource(effectiveNavBarStyle.labelRes),
                         isTablet = isTablet,
                         onClick = { showNavBarStyleSheet = true },
                     )
                 }
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsNavigationRow(
+                    title = stringResource(Res.string.settings_liquid_glass_title),
+                    description = stringResource(Res.string.settings_liquid_glass_row_description),
+                    isTablet = isTablet,
+                    onClick = { showLiquidGlassSheet = true },
+                )
             }
         }
 
@@ -258,6 +260,29 @@ internal fun LazyListScope.appearanceSettingsContent(
                     showAppIconPicker = false
                 },
             )
+        }
+
+        if (showLiquidGlassSheet) {
+            NavigationBarLiquidGlassEffectDrafts { barEffects, selectionEffects ->
+                LiquidGlassSettingsSheet(
+                    isTablet = false,
+                    tabletLayout = LocalNuvioTabletNavLayout.current,
+                    selectedStyle = effectiveNavBarStyle,
+                    selectedPosition = navBarPosition,
+                    glowEnabled = glowEnabled,
+                    onGlowChanged = ThemeSettingsRepository::setNavBarGlowEnabled,
+                    defaultIconColorEnabled = navBarDefaultIconColorEnabled,
+                    defaultIconColor = navBarDefaultIconColor,
+                    floatingBarEffects = barEffects,
+                    onFloatingBarEffectsChanged = ThemeSettingsRepository::updateNavBarLiquidGlassBarEffects,
+                    selectionLensEffects = selectionEffects,
+                    onSelectionLensEffectsChanged = ThemeSettingsRepository::updateNavBarLiquidGlassSelectionEffects,
+                    onSaveLiquidGlassEffectSettings = ThemeSettingsRepository::saveNavBarLiquidGlassEffectSettings,
+                    glassStyle = navBarGlass,
+                    onGlassStyleChanged = ThemeSettingsRepository::setNavBarGlass,
+                    onDismiss = { showLiquidGlassSheet = false },
+                )
+            }
         }
 
         if (showNavBarStyleSheet) {

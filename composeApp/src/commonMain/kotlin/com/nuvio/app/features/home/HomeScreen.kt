@@ -130,6 +130,9 @@ fun HomeScreen(
     onFolderClick: ((collectionId: String, folderId: String) -> Unit)? = null,
     onFirstCatalogRendered: (() -> Unit)? = null,
 ) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.HOME,
+    ) {
     LaunchedEffect(Unit) {
         AddonRepository.initialize()
         CollectionRepository.initialize()
@@ -1269,6 +1272,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 private fun LazyListScope.homeContinueWatchingSections(

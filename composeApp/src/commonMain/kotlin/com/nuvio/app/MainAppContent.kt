@@ -239,6 +239,12 @@ internal fun MainAppContent(
     onRootContentReady: ((Boolean) -> Unit)? = null,
     onSwitchProfile: () -> Unit = {},
 ) {
+        // Every glass surface follows the blur, refraction and tint sliders of the Liquid glass settings.
+        LaunchedEffect(Unit) {
+            com.nuvio.app.features.settings.ThemeSettingsRepository.navBarLiquidGlassBarEffects.collect {
+                com.nuvio.app.core.ui.glass.GlassAppearance.effects = it
+            }
+        }
         val navBackStack = rememberNavBackStack(navigationSavedStateConfiguration, initialRoute)
         val posterNavigation = remember { PosterNavigationState() }
         val metaScreenSettings by remember {

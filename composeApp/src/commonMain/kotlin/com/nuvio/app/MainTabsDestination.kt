@@ -50,6 +50,8 @@ import com.nuvio.app.core.ui.glass.rememberNuvioBackdrop
 import com.nuvio.app.core.ui.glass.LiquidGlassEffectDefaults
 import com.nuvio.app.core.ui.glass.LiquidGlassEffectSettings
 import com.nuvio.app.core.ui.glass.LiquidGlassStyle
+import com.nuvio.app.core.ui.glass.forNavigationBar
+import com.nuvio.app.core.ui.glass.navigationBarGlow
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_nav_home
 import nuvio.composeapp.generated.resources.compose_nav_library
@@ -221,9 +223,9 @@ internal fun MainTabsDestination(
                         },
                         items = floatingNavigationItems,
                         trailingItem = searchNavigationItem,
-                        glowEnabled = navBarGlowEnabled,
+                        glowEnabled = navBarGlass.navigationBarGlow(navBarGlowEnabled),
                         inlineLabels = isTabletLayout,
-                        glassStyle = navBarGlass,
+                        glassStyle = navBarGlass.forNavigationBar(),
                         defaultIconColorOverride = navBarDefaultIconColorOverride,
                     )
                 }
@@ -531,9 +533,9 @@ internal fun BoxScope.SettingsRouteNavigationBar(
                 } else {
                     null
                 },
-                glowEnabled = glowEnabled,
+                glowEnabled = glass.navigationBarGlow(glowEnabled),
                 inlineLabels = isTabletLayout,
-                glassStyle = glass,
+                glassStyle = glass.forNavigationBar(),
                 defaultIconColorOverride = defaultIconColorOverride,
             )
         }

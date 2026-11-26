@@ -118,7 +118,9 @@ fun NuvioFloatingPrompt(
 
     // Just above the floating navigation bar (its bottom margin + its tallest height + a gap).
     val aboveNavBar = floatingNavigationBarPadding().calculateBottomPadding() + 64.dp + 12.dp
-    val glassStyle = LiquidGlassSettings.enabled
+    // The resume card belongs to the home screen: it follows the « Accueil » box of the Liquid glass settings.
+    val glassStyle = LiquidGlassSettings.enabled &&
+        com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.HOME)
     val accent = tokens.colors.accent
 
     AnimatedVisibility(

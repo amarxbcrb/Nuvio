@@ -38,6 +38,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import nuvio.composeapp.generated.resources.streams_hero_episode_overline
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Close
@@ -159,6 +163,9 @@ fun StreamsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.nuvio.app.core.ui.glass.LocalGlassSurface provides com.nuvio.app.core.ui.glass.GlassSurface.SOURCES,
+    ) {
     val useNativeNavigation = LocalUseNativeNavigation.current
     val nativeNavigationBarHidden = LocalNativeNavigationBarHidden.current
     val uiState by StreamsRepository.uiState.collectAsStateWithLifecycle()
@@ -358,7 +365,7 @@ fun StreamsScreen(
         }
     }
 
-    if (showLoadingScreen) return
+    if (showLoadingScreen) return@CompositionLocalProvider
 
     BoxWithConstraints(
         modifier = modifier
@@ -409,6 +416,9 @@ fun StreamsScreen(
                 backdrop = background ?: poster,
                 genres = remember(parentMetaType, parentMetaId) {
                     com.nuvio.app.features.details.MetaDetailsRepository.peek(parentMetaType, parentMetaId)?.genres.orEmpty()
+                },
+                imdbRating = remember(parentMetaType, parentMetaId) {
+                    com.nuvio.app.features.details.MetaDetailsRepository.peek(parentMetaType, parentMetaId)?.imdbRating
                 },
                 seasonNumber = seasonNumber,
                 episodeNumber = episodeNumber,
@@ -470,6 +480,7 @@ fun StreamsScreen(
         )
     }
 }
+}
 
 @Composable
 private fun MobileStreamsLayout(
@@ -483,6 +494,7 @@ private fun MobileStreamsLayout(
     heroArtwork: String?,
     backdrop: String?,
     genres: List<String>,
+    imdbRating: String? = null,
     seasonNumber: Int?,
     episodeNumber: Int?,
     episodeTitle: String?,
@@ -503,7 +515,8 @@ private fun MobileStreamsLayout(
     // Follows the app Style, like the title page: Liquid glass gives the blurred artwork and glass
     // cards, Opaque gives plain dark cards.
     val glassStyle by com.nuvio.app.features.settings.ThemeSettingsRepository.liquidGlassEffectsEnabled.collectAsStateWithLifecycle()
-    val cinematicBackground = heroArtwork != null && glassStyle && com.nuvio.app.core.ui.glass.isLiquidGlassAvailable()
+    val cinematicBackground = heroArtwork != null && glassStyle && com.nuvio.app.core.ui.glass.isLiquidGlassAvailable() &&
+        com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.SOURCES)
     val streamsGlassEnabled = cinematicBackground
     var showSearchSettings by remember { mutableStateOf(false) }
     Box(modifier = modifier.fillMaxSize()) {
@@ -555,12 +568,13 @@ private fun MobileStreamsLayout(
                     image = backdrop ?: heroArtwork,
                     logo = logo,
                     title = title,
-                    episodeLine = if (isEpisode && seasonNumber != null && episodeNumber != null) {
-                        stringResource(Res.string.streams_episode_badge, seasonNumber, episodeNumber) +
-                            (episodeTitle?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
+                    overline = if (isEpisode && seasonNumber != null && episodeNumber != null) {
+                        stringResource(Res.string.streams_hero_episode_overline, seasonNumber, episodeNumber)
                     } else {
                         null
                     },
+                    episodeTitle = episodeTitle?.takeIf { isEpisode && it.isNotBlank() },
+                    imdbRating = imdbRating,
                     genres = genres,
                     fadeTo = if (cinematicBackground) Color.Transparent else MaterialTheme.colorScheme.background,
                 )
@@ -688,18 +702,24 @@ internal fun ResumeBanner(
     }
 }
 
-/** Top of the links screen: the artwork, the logo (or the title), the episode line and the genres. */
+/**
+ * Top of the links screen, as in the mockup: the artwork, then left-aligned « SAISON 1 · ÉPISODE 1 »,
+ * the episode title (the title's logo or name for a film), the IMDb rating and the genres as chips.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LinksHero(
     image: String?,
     logo: String?,
     title: String,
-    episodeLine: String?,
+    overline: String?,
+    episodeTitle: String?,
+    imdbRating: String?,
     genres: List<String>,
     fadeTo: Color,
 ) {
     var logoFailed by remember(logo) { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxWidth().height(if (episodeLine != null) 480.dp else 460.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().height(400.dp)) {
         if (image != null) {
             // The artwork itself fades out (alpha mask) over its lower half, so it melts into
             // what is behind it instead of ending on a visible line.
@@ -734,7 +754,7 @@ private fun LinksHero(
                         colorStops = arrayOf(
                             0.0f to Color.Black.copy(alpha = 0.30f),
                             0.22f to Color.Transparent,
-                            0.60f to Color.Transparent,
+                            0.55f to Color.Transparent,
                             1.0f to fadeTo,
                         ),
                     ),
@@ -742,53 +762,76 @@ private fun LinksHero(
         )
         Column(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
+                .align(Alignment.BottomStart)
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            val logoUrl = logo?.takeIf { it.isNotBlank() && !logoFailed }
+            if (overline != null) {
+                Text(
+                    text = overline.uppercase(),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.2.sp,
+                    color = Color.White.copy(alpha = 0.72f),
+                    maxLines = 1,
+                )
+            }
+            val logoUrl = logo?.takeIf { it.isNotBlank() && !logoFailed && episodeTitle == null }
             if (logoUrl != null) {
                 AsyncImage(
                     model = logoUrl,
                     contentDescription = title,
-                    modifier = Modifier.height(96.dp).fillMaxWidth(0.78f),
+                    modifier = Modifier.height(84.dp).fillMaxWidth(0.72f),
                     contentScale = ContentScale.Fit,
+                    alignment = Alignment.CenterStart,
                     onError = { logoFailed = true },
                 )
             } else {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
+                    text = episodeTitle ?: title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (episodeLine != null) {
-                Text(
-                    text = episodeLine,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (genres.isNotEmpty()) {
-                Text(
-                    text = genres.take(3).joinToString(" • "),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.75f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            if (imdbRating != null || genres.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    imdbRating?.takeIf { it.isNotBlank() && it != "0" && it != "N/A" }?.let { rating ->
+                        Text(
+                            text = "IMDb ${rating.replace('.', ',')}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(Color(0xFFF5C518))
+                                .padding(horizontal = 12.dp, vertical = 5.dp),
+                        )
+                    }
+                    genres.take(3).forEach { genre ->
+                        Text(
+                            text = genre,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(percent = 50))
+                                .padding(horizontal = 12.dp, vertical = 5.dp),
+                        )
+                    }
+                }
             }
         }
     }
