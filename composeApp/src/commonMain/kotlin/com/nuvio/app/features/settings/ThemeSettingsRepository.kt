@@ -88,6 +88,25 @@ object ThemeSettingsRepository {
     private val _navBarGlass = MutableStateFlow(LiquidGlassStyle.Default)
     val navBarGlass: StateFlow<LiquidGlassStyle> = _navBarGlass.asStateFlow()
 
+    /** Liquid glass settings of each element other than the navigation bar. */
+    private val _glassSurfaceSettings =
+        MutableStateFlow<Map<com.nuvio.app.core.ui.glass.GlassSurface, com.nuvio.app.core.ui.glass.GlassSurfaceSettings>>(emptyMap())
+    internal val glassSurfaceSettings: StateFlow<Map<com.nuvio.app.core.ui.glass.GlassSurface, com.nuvio.app.core.ui.glass.GlassSurfaceSettings>> =
+        _glassSurfaceSettings.asStateFlow()
+
+    internal fun updateGlassSurfaceSettings(
+        surface: com.nuvio.app.core.ui.glass.GlassSurface,
+        transform: (com.nuvio.app.core.ui.glass.GlassSurfaceSettings) -> com.nuvio.app.core.ui.glass.GlassSurfaceSettings,
+    ) {
+        ensureLoaded()
+        val current = _glassSurfaceSettings.value[surface] ?: com.nuvio.app.core.ui.glass.GlassSurfaceSettings()
+        val updated = _glassSurfaceSettings.value + (surface to transform(current))
+        if (updated == _glassSurfaceSettings.value) return
+        _glassSurfaceSettings.value = updated
+        com.nuvio.app.core.ui.glass.GlassAppearance.surfaceSettings = updated
+        ThemeSettingsStorage.saveGlassSurfaces(com.nuvio.app.core.ui.glass.encodeGlassSurfaceSettings(updated))
+    }
+
     private val _liquidGlassEffectsEnabled = MutableStateFlow(true)
     val liquidGlassEffectsEnabled: StateFlow<Boolean> = _liquidGlassEffectsEnabled.asStateFlow()
 
@@ -133,6 +152,8 @@ object ThemeSettingsRepository {
         _navBarPosition.value = NavBarPosition.BOTTOM
         _navBarGlass.value = LiquidGlassStyle.Default
         com.nuvio.app.core.ui.glass.GlassAppearance.style = _navBarGlass.value
+        _glassSurfaceSettings.value = emptyMap()
+        com.nuvio.app.core.ui.glass.GlassAppearance.surfaceSettings = emptyMap()
         applyLiquidGlassEffectsEnabled(true)
     }
 
@@ -183,6 +204,8 @@ object ThemeSettingsRepository {
         val storedNavBarGlass = ThemeSettingsStorage.loadNavBarGlass()
         _navBarGlass.value = LiquidGlassStyle.decode(storedNavBarGlass)
         com.nuvio.app.core.ui.glass.GlassAppearance.style = _navBarGlass.value
+        _glassSurfaceSettings.value = com.nuvio.app.core.ui.glass.decodeGlassSurfaceSettings(ThemeSettingsStorage.loadGlassSurfaces())
+        com.nuvio.app.core.ui.glass.GlassAppearance.surfaceSettings = _glassSurfaceSettings.value
         migrateLegacyNavBarGlass(storedNavBarGlass)
         applyLiquidGlassEffectsEnabled(ThemeSettingsStorage.loadLiquidGlassEffectsEnabled() ?: true)
     }

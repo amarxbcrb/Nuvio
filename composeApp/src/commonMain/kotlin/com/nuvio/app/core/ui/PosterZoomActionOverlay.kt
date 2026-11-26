@@ -60,6 +60,8 @@ import androidx.compose.ui.unit.min
 import coil3.compose.AsyncImage
 import com.kyant.backdrop.Backdrop
 import com.nuvio.app.core.ui.glass.liquidGlassBlur
+import com.nuvio.app.core.ui.glass.liquidGlassSurface
+import androidx.compose.foundation.border
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -333,7 +335,18 @@ fun NuvioPosterZoomActionOverlay(
                         shape = RoundedCornerShape(NuvioTokens.Space.s20.toPx())
                         clip = true
                     }
-                    .background(tokens.colors.surfaceElevated),
+                    // Glass menu, following the « Fenêtres » tab of the Liquid glass settings.
+                    .liquidGlassSurface(
+                        backdrop = backdrop,
+                        shape = RoundedCornerShape(NuvioTokens.Space.s20),
+                        tint = tokens.colors.surfaceElevated.copy(alpha = 0.55f),
+                        fallback = tokens.colors.surfaceElevated,
+                        blurRadius = 24.dp,
+                        refractionHeight = 12.dp,
+                        refractionAmount = 20.dp,
+                        surface = com.nuvio.app.core.ui.glass.GlassSurface.POPUPS,
+                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(NuvioTokens.Space.s20)),
             ) {
                 frozenActions.forEachIndexed { index, action ->
                     if (index > 0) {

@@ -2977,7 +2977,7 @@
     <string name="settings_liquid_glass_title">Liquid glass</string>
     <string name="settings_liquid_glass_row_description">Material, halo, blur and the screens it applies to</string>
     <string name="settings_liquid_glass_apply_to">Apply to</string>
-    <string name="settings_liquid_glass_apply_to_hint">Unticked screens keep their plain look.</string>
+    <string name="settings_liquid_glass_apply_to_hint">Off, this element keeps its plain look.</string>
     <string name="settings_liquid_glass_surface_nav">Navigation bar</string>
     <string name="settings_liquid_glass_surface_home">Home</string>
     <string name="settings_liquid_glass_surface_sources">Source selection</string>
@@ -2988,4 +2988,11 @@
     <string name="player_episode_choose_source">Choose a source</string>
     <string name="links_other_sources">%1$d other sources</string>
     <string name="streams_hero_episode_overline">Season %1$d · Episode %2$d</string>
+    <string name="settings_liquid_glass_enable">Glass on « %1$s »</string>
+    <string name="settings_liquid_glass_glow_description">Adds a soft light around this element.</string>
+    <string name="settings_liquid_glass_preview_hint">Preview of the glass</string>
+    <string name="settings_liquid_glass_tab_nav">Bar</string>
+    <string name="settings_liquid_glass_tab_sources">Sources</string>
+    <string name="settings_liquid_glass_tab_player">Player</string>
+    <string name="settings_liquid_glass_tab_popups">Windows</string>
 </resources>

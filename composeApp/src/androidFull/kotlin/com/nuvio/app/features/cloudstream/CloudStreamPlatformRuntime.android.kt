@@ -96,6 +96,8 @@ internal actual object CloudStreamPlatformRuntime {
             ?: return CloudStreamSettingsOpenResult.Failed
         return withContext(Dispatchers.Main) {
             CommonActivity.setActivityInstance(activity)
+            // The settings window the user asked for must show (other extension popups are hidden).
+            ExtensionPopupBlocker.allowForAWhile()
             runCatching { CommonActivity.withUi { open(activity) } }.fold(
                 onSuccess = { CloudStreamSettingsOpenResult.Opened },
                 onFailure = { error ->
@@ -668,7 +670,7 @@ private class AndroidDexCloudStreamProvider(
         private const val DEFAULT_DISCOVERY_TIMEOUT_MS = 15_000L
         private const val DEFAULT_LOAD_TIMEOUT_MS = 30_000L
         private const val DEFAULT_LINK_TIMEOUT_MS = 120_000L
-        private const val LINKS_AFTER_FIRST_WAIT_MS = 4_000L
+        private const val LINKS_AFTER_FIRST_WAIT_MS = 2_500L
         private const val LINK_POLL_MS = 150L
 
         /** Runs extensions' link searches detached from their callers (see loadLinks). */

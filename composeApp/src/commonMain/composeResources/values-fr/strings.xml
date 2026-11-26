@@ -2046,7 +2046,7 @@
     <string name="settings_liquid_glass_title">Liquid glass</string>
     <string name="settings_liquid_glass_row_description">Matière, halo, flou et écrans concernés</string>
     <string name="settings_liquid_glass_apply_to">Appliquer à</string>
-    <string name="settings_liquid_glass_apply_to_hint">Les écrans décochés gardent leur apparence normale.</string>
+    <string name="settings_liquid_glass_apply_to_hint">Désactivé, cet élément garde son apparence normale.</string>
     <string name="settings_liquid_glass_surface_nav">Barre de navigation</string>
     <string name="settings_liquid_glass_surface_home">Accueil</string>
     <string name="settings_liquid_glass_surface_sources">Sélection des sources</string>
@@ -2057,4 +2057,11 @@
     <string name="player_episode_choose_source">Choisir une source</string>
     <string name="links_other_sources">%1$d autres sources</string>
     <string name="streams_hero_episode_overline">Saison %1$d · Épisode %2$d</string>
+    <string name="settings_liquid_glass_enable">Verre sur « %1$s »</string>
+    <string name="settings_liquid_glass_glow_description">Ajoute une lumière douce autour de cet élément.</string>
+    <string name="settings_liquid_glass_preview_hint">Aperçu du verre</string>
+    <string name="settings_liquid_glass_tab_nav">Barre</string>
+    <string name="settings_liquid_glass_tab_sources">Sources</string>
+    <string name="settings_liquid_glass_tab_player">Lecteur</string>
+    <string name="settings_liquid_glass_tab_popups">Fenêtres</string>
 </resources>

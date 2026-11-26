@@ -87,6 +87,7 @@
     <string name="links_others">%1$d autres</string>
     <string name="links_favorites_first">Favoris d’abord</string>
     <string name="links_count">%1$d liens</string>
+    <string name="links_count_one">%1$d lien</string>
     <string name="links_clear">Effacer</string>
     <string name="links_search_source">Rechercher une source</string>
     <string name="links_resume_at">Reprendre à %1$s</string>

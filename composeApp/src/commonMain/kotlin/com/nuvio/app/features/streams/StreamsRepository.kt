@@ -1079,7 +1079,7 @@ object StreamsRepository {
 }
 
 private const val CLOUDSTREAM_STREAM_PROVIDER_CONCURRENCY = 18
-private const val REMEMBERED_SOURCE_WAIT_MS = 15_000L
+private const val REMEMBERED_SOURCE_WAIT_MS = 8_000L
 
 /** How long the automatic start waits for a favorite source still searching before taking any source; a favorite that answers with no link is skipped at once. */
-private const val FAVORITE_WAIT_MS = 15_000L
+private const val FAVORITE_WAIT_MS = 8_000L

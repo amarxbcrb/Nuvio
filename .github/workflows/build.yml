@@ -1,7 +1,7 @@
 name: Build Nuvio Plus and Nuvio Pro
 
 # Each push to main builds both editions and publishes them in one numbered release
-# (v<major>.<minor>.<patch + run number>). The in-app updater reads these releases: Nuvio Plus
+# (v<MARKETING_VERSION>, see Compute version). The in-app updater reads these releases: Nuvio Plus
 # downloads NuvioPlus.apk, Nuvio Pro downloads NuvioPro.apk.
 
 on:
@@ -88,10 +88,19 @@ jobs:
       - name: Compute version
         id: version
         run: |
+          # The version is the one written in Version.xcconfig (semantic versioning, chosen at
+          # each change: 1.0.1 small fix, 1.1.0 new options, 2.0.0 big change). If that release
+          # already exists (pushed again without changing it), the next free patch number is used.
           marketing=$(grep '^MARKETING_VERSION=' iosApp/Configuration/Version.xcconfig | cut -d= -f2 | tr -d '[:space:]')
           base_code=$(grep '^CURRENT_PROJECT_VERSION=' iosApp/Configuration/Version.xcconfig | cut -d= -f2 | tr -d '[:space:]')
+          git fetch --tags --quiet origin || true
+          version="$marketing"
           patch="${marketing##*.}"
-          version="${marketing%.*}.$((patch + GITHUB_RUN_NUMBER))"
+          while git rev-parse -q --verify "refs/tags/v$version" >/dev/null; do
+            patch=$((patch + 1))
+            version="${marketing%.*}.$patch"
+          done
+          # The version code only has to grow for Android to accept the update.
           code=$((base_code + GITHUB_RUN_NUMBER))
           echo "name=$version" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"

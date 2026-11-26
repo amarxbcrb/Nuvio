@@ -27,6 +27,7 @@ object CommonActivity {
 
     fun setActivityInstance(newActivity: Activity?) {
         activity = newActivity
+        if (newActivity != null) com.nuvio.app.features.cloudstream.ExtensionPopupBlocker.watch()
     }
 
     /** Lets extensions reach the screen while [block] runs (settings, search, load, links). */
@@ -43,8 +44,8 @@ object CommonActivity {
     internal fun allowUi(allowed: Boolean) {
         if (allowed) {
             uiRequests.incrementAndGet()
-            // Extension popups that open now are shown one at a time.
-            com.nuvio.app.features.cloudstream.ExtensionPopupQueue.watch()
+            // Extension popups that open now are hidden (see ExtensionPopupBlocker).
+            com.nuvio.app.features.cloudstream.ExtensionPopupBlocker.watch()
         } else uiRequests.updateAndGet { count -> (count - 1).coerceAtLeast(0) }
     }
 }

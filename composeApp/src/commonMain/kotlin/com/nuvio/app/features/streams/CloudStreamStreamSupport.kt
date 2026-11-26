@@ -19,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withTimeoutOrNull
 
 private val cloudStreamFetchLog = Logger.withTag("CloudStreamFetch")
@@ -124,18 +126,23 @@ internal suspend fun resolveCloudStreamProviderStreams(
                     return null
                 }
 
-                // Anime extensions can offer the same episode dubbed and subtitled; both are loaded.
-                val streams = targets.flatMap { target ->
-                    val sources = runCatchingUnlessCancelled {
-                        CloudStreamRepository.loadLinks(providerGroup.providerId, target.data).getOrThrow()
-                    }.onFailure { error -> lastError = error }
-                        .getOrNull()
-                        .orEmpty()
-                    cloudStreamSourcesToStreamItems(
-                        providerId = providerGroup.providerId,
-                        providerName = providerGroup.addonName,
-                        sources = sources,
-                    ).map { stream -> stream.withCloudStreamAudioVariant(target.audioVariant) }
+                // Anime extensions can offer the same episode dubbed and subtitled; both are loaded,
+                // at the same time rather than one after the other.
+                val streams = coroutineScope {
+                    targets.map { target ->
+                        async {
+                            val sources = runCatchingUnlessCancelled {
+                                CloudStreamRepository.loadLinks(providerGroup.providerId, target.data).getOrThrow()
+                            }.onFailure { error -> lastError = error }
+                                .getOrNull()
+                                .orEmpty()
+                            cloudStreamSourcesToStreamItems(
+                                providerId = providerGroup.providerId,
+                                providerName = providerGroup.addonName,
+                                sources = sources,
+                            ).map { stream -> stream.withCloudStreamAudioVariant(target.audioVariant) }
+                        }
+                    }.awaitAll().flatten()
                 }
                 if (streams.isEmpty()) {
                     lastError = IllegalStateException("No links found")

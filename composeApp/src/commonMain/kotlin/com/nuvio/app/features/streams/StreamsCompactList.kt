@@ -7,8 +7,17 @@ import nuvio.composeapp.generated.resources.links_show_less
 import nuvio.composeapp.generated.resources.links_show_more
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -93,6 +102,7 @@ import nuvio.composeapp.generated.resources.links_film_source_header
 import nuvio.composeapp.generated.resources.links_hide_sources
 import nuvio.composeapp.generated.resources.links_others
 import nuvio.composeapp.generated.resources.links_other_sources
+import nuvio.composeapp.generated.resources.links_count_one
 import nuvio.composeapp.generated.resources.links_profile
 import nuvio.composeapp.generated.resources.links_quality
 import nuvio.composeapp.generated.resources.links_resume_at
@@ -322,43 +332,87 @@ internal fun CompactStreamList(
 
         // Profil, qualité, source.
         item(key = "filters") {
-            // One segmented track, as in the mockup: « Français ⌄ | Qualité ⌄ | Source ⌄ ».
-            Row(
+            // Works like the navigation bar: one glass track, and a glass pill that slides with a
+            // spring (and stretches a little on the way) to the segment touched, which then opens.
+            var selectedSegment by rememberSaveable { mutableIntStateOf(0) }
+            val segmentBounds = remember { mutableStateMapOf<Int, Pair<Float, Float>>() }
+            val target = segmentBounds[selectedSegment]
+            val pillX by animateFloatAsState(
+                targetValue = target?.first ?: 0f,
+                animationSpec = spring(dampingRatio = 0.62f, stiffness = 420f),
+                label = "filter_pill_x",
+            )
+            val pillWidth by animateFloatAsState(
+                targetValue = target?.second ?: 0f,
+                animationSpec = spring(dampingRatio = 0.78f, stiffness = 260f),
+                label = "filter_pill_width",
+            )
+            val density = LocalDensity.current
+            val pill = RoundedCornerShape(percent = 50)
+            fun Modifier.segment(index: Int): Modifier = onGloballyPositioned {
+                val bounds = it.positionInParent().x to it.size.width.toFloat()
+                if (segmentBounds[index] != bounds) segmentBounds[index] = bounds
+            }
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .height(58.dp)
-                    .linksSurface(RoundedCornerShape(percent = 50))
+                    .linksSurface(pill)
                     .padding(5.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                FilterPill(
-                    label = stringResource(Res.string.links_profile),
-                    value = activeProfile.displayName(),
-                    highlighted = true,
-                    onClick = onOpenProfiles,
-                    // The profile name (« Français ») is the longest: it gets more room.
-                    modifier = Modifier.weight(1.4f),
-                )
-                MenuFilterPill(
-                    label = stringResource(Res.string.links_quality),
-                    // Without a filter the pill names what it filters (« Qualité »), not « Toutes ».
-                    value = quality ?: stringResource(Res.string.links_quality),
-                    highlighted = quality != null,
-                    options = listOf(null to all) + qualities.map { (key, count) -> key to "$key ($count)" },
-                    selected = quality,
-                    onSelect = { quality = it; expandedKey = null },
-                    modifier = Modifier.weight(1f),
-                )
-                MenuFilterPill(
-                    label = stringResource(Res.string.links_source),
-                    value = sources.firstOrNull { it.first == source }?.second ?: stringResource(Res.string.links_source),
-                    highlighted = source != null,
-                    options = listOf(null to all) + sources.map { (id, name, count) -> id to "$name ($count)" },
-                    selected = source,
-                    onSelect = { source = it; expandedKey = null },
-                    modifier = Modifier.weight(1f),
-                )
+                if (target != null && pillWidth > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .offset { IntOffset(pillX.roundToInt(), 0) }
+                            .width(with(density) { pillWidth.toDp() })
+                            .fillMaxHeight()
+                            .clip(pill)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.26f), Color.White.copy(alpha = 0.10f)),
+                                ),
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.20f), pill),
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    FilterPill(
+                        label = stringResource(Res.string.links_profile),
+                        value = activeProfile.displayName(),
+                        highlighted = false,
+                        onClick = {
+                            selectedSegment = 0
+                            onOpenProfiles()
+                        },
+                        // The profile name (« Français ») is the longest: it gets more room.
+                        modifier = Modifier.weight(1.4f).segment(0),
+                    )
+                    MenuFilterPill(
+                        label = stringResource(Res.string.links_quality),
+                        // Without a filter the pill names what it filters (« Qualité »), not « Toutes ».
+                        value = quality ?: stringResource(Res.string.links_quality),
+                        highlighted = quality != null,
+                        options = listOf(null to all) + qualities.map { (key, count) -> key to "$key ($count)" },
+                        selected = quality,
+                        onOpen = { selectedSegment = 1 },
+                        onSelect = { quality = it; expandedKey = null },
+                        modifier = Modifier.weight(1f).segment(1),
+                    )
+                    MenuFilterPill(
+                        label = stringResource(Res.string.links_source),
+                        value = sources.firstOrNull { it.first == source }?.second ?: stringResource(Res.string.links_source),
+                        highlighted = source != null,
+                        options = listOf(null to all) + sources.map { (id, name, count) -> id to "$name ($count)" },
+                        selected = source,
+                        onOpen = { selectedSegment = 2 },
+                        onSelect = { source = it; expandedKey = null },
+                        modifier = Modifier.weight(1f).segment(2),
+                    )
+                }
             }
         }
 
@@ -433,7 +487,7 @@ internal fun CompactStreamList(
                     item(key = "list_header") {
                         if (filtering) {
                             SectionHeader(
-                                title = stringResource(Res.string.links_count, listLinks.size),
+                                title = linksCountLabel(listLinks.size),
                                 action = stringResource(Res.string.links_clear),
                                 onAction = { quality = null; source = null },
                             )
@@ -441,7 +495,7 @@ internal fun CompactStreamList(
                             val count = if (filmSource != null) {
                                 stringResource(Res.string.links_other_sources, listLinks.size)
                             } else {
-                                stringResource(Res.string.links_count, listLinks.size)
+                                linksCountLabel(listLinks.size)
                             }
                             val parts = buildList {
                                 if (activeProfile.hasPreferences) {
@@ -460,10 +514,12 @@ internal fun CompactStreamList(
                             SectionHeader(title = count, trailing = parts.joinToString(" · ").takeIf { it.isNotEmpty() })
                         }
                     }
-                    // One glass card per source: its name and ♥ once, then its links.
                     val bySource = listLinks.groupBy { it.stream.addonId }.entries.toList()
-                    bySource.forEachIndexed { index, (addonId, links) ->
-                        item(key = "source:$addonId") {
+                    // All the other sources in one glass card, split by hairlines.
+                    item(key = "sources") {
+                        LinkGroup {
+                          bySource.forEachIndexed { index, (addonId, links) ->
+                           androidx.compose.runtime.key(addonId) {
                             SourceCard(
                                 name = links.first().stream.addonName,
                                 addonId = addonId,
@@ -478,6 +534,8 @@ internal fun CompactStreamList(
                                 onDownload = onDownload,
                                 onCopyLink = onCopyLink,
                             )
+                           }
+                          }
                         }
                     }
                 }
@@ -506,6 +564,7 @@ private fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // « SOURCE ACTUELLE », « 10 AUTRES SOURCES »: small capitals, as on iOS.
+        // The count never gets cut: the trailing info (« Doublé d'abord · … ») gives way first.
         Text(
             text = title.uppercase(),
             style = MaterialTheme.typography.labelLarge,
@@ -513,8 +572,8 @@ private fun SectionHeader(
             letterSpacing = 1.2.sp,
             color = Color.White.copy(alpha = 0.62f),
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            softWrap = false,
+            modifier = if (trailing == null) Modifier.weight(1f) else Modifier,
         )
         if (trailing != null) {
             Text(
@@ -523,7 +582,8 @@ private fun SectionHeader(
                 color = Color.White.copy(alpha = 0.62f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 12.dp),
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f).padding(start = 12.dp),
             )
         }
         if (action != null && onAction != null) {
@@ -616,7 +676,7 @@ private fun SourceCard(
     onCopyLink: (StreamItem) -> Unit,
 ) {
     var open by rememberSaveable(addonId) { mutableStateOf(false) }
-    LinkGroup(isFirst = isFirst, isLast = isLast) {
+    Column(modifier = Modifier.animateContentSize()) {
         if (!isFirst) LinkDivider()
         SourceHeader(name = name, addonId = addonId, count = links.size, open = open, onToggleOpen = { open = !open })
         AnimatedVisibility(visible = open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
@@ -668,7 +728,7 @@ private fun SourceHeader(
             )
             if (count != null) {
                 Text(
-                    text = stringResource(Res.string.links_count, count),
+                    text = linksCountLabel(count),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.62f),
                     maxLines = 1,
@@ -1057,9 +1117,7 @@ private fun FilterPill(
             .fillMaxHeight()
             .nuvioPressScale(pressedScale = 0.96f)
             .clip(shape)
-            // A segment of the track: the profile (and a filter in use) is a lighter pill.
-            .background(if (highlighted) Color.White.copy(alpha = 0.16f) else Color.Transparent)
-            .then(if (highlighted) Modifier.border(1.dp, Color.White.copy(alpha = 0.10f), shape) else Modifier)
+            // The sliding pill behind marks the segment touched; a filter in use gets a dot.
             .clickable(onClick = onClick)
             .semantics { contentDescription = "$label : $value" }
             .padding(horizontal = 10.dp),
@@ -1075,6 +1133,10 @@ private fun FilterPill(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
+        if (highlighted) {
+            Spacer(Modifier.width(5.dp))
+            Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.nuvio.colors.accent))
+        }
         Spacer(Modifier.width(4.dp))
         Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(18.dp))
     }
@@ -1089,10 +1151,19 @@ private fun MenuFilterPill(
     selected: String?,
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
+    onOpen: () -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier.fillMaxHeight()) {
-        FilterPill(label = label, value = value, highlighted = highlighted, onClick = { expanded = true })
+        FilterPill(
+            label = label,
+            value = value,
+            highlighted = highlighted,
+            onClick = {
+                onOpen()
+                expanded = true
+            },
+        )
         Menu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (key, text) ->
                 MenuItem(text = text, selected = key == selected, onClick = { onSelect(key); expanded = false })
@@ -1135,3 +1206,9 @@ internal fun PlayerSourceGroupCard(
         }
     }
 }
+
+
+/** « 1 lien », « 7 liens ». */
+@Composable
+private fun linksCountLabel(count: Int): String =
+    if (count == 1) stringResource(Res.string.links_count_one, count) else stringResource(Res.string.links_count, count)

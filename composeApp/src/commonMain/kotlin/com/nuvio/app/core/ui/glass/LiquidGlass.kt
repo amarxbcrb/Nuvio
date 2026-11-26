@@ -87,6 +87,12 @@ object GlassAppearance {
     var glow: Boolean by mutableStateOf(true)
     internal var effects: LiquidGlassEffectSettings by mutableStateOf(LiquidGlassEffectDefaults.floatingBar)
 
+    /** Settings of each element other than the navigation bar (« Liquid glass » tabs). */
+    internal var surfaceSettings: Map<GlassSurface, GlassSurfaceSettings> by mutableStateOf(emptyMap())
+
+    internal fun settingsFor(surface: GlassSurface): GlassSurfaceSettings =
+        surfaceSettings[surface] ?: GlassSurfaceSettings()
+
     fun isEnabledFor(surface: GlassSurface?): Boolean = surface == null || surface in style.surfaces
 }
 
@@ -323,28 +329,32 @@ internal fun Modifier.liquidGlassSurface(
     backdropOpacity: Float = 1f,
     surface: GlassSurface? = null,
 ): Modifier {
-    val style = GlassAppearance.style
+    val isBar = surface == GlassSurface.NAVIGATION_BAR
+    // Elements outside the listed screens (surface null) keep the default look.
+    val own = if (isBar) null else surface?.let(GlassAppearance::settingsFor) ?: GlassSurfaceSettings()
+    val style = own?.asStyle(GlassAppearance.style) ?: GlassAppearance.style
     if (backdrop == null || !isLiquidGlassSupported() || !style.usesBackdrop || !GlassAppearance.isEnabledFor(surface)) {
         return if (fallbackBrush != null) clip(shape).background(fallbackBrush) else clip(shape).background(fallback)
     }
-    // The navigation bar draws its own effects; every other surface keeps its proportions and
-    // follows the user's blur, refraction and tint sliders.
-    val effects = GlassAppearance.effects
+    // The navigation bar draws its own effects; every other element keeps its proportions and
+    // follows its own blur, refraction and tint sliders.
+    val effects = own?.effects ?: LiquidGlassEffectDefaults.floatingBar
     val defaults = LiquidGlassEffectDefaults.floatingBar
-    val scaled = surface != GlassSurface.NAVIGATION_BAR
-    fun ratio(value: Float, default: Float): Float = if (scaled && default > 0f) (value / default) else 1f
+    fun ratio(value: Float, default: Float): Float = if (!isBar && default > 0f) (value / default) else 1f
     val blurRadius = if (style.usesBlur) blurRadius * ratio(effects.blurRadiusDp, defaults.blurRadiusDp) else 0.dp
     val refractionHeight = if (style.usesLens) refractionHeight * ratio(effects.refractionHeightDp, defaults.refractionHeightDp) else 0.dp
     val refractionAmount = refractionAmount * ratio(effects.refractionAmountDp, defaults.refractionAmountDp)
-    val tintScale = ratio(effects.tintOpacity, defaults.tintOpacity)
-    val tint = tint.copy(
-        alpha = (tint.alpha * tintScale * if (style.material == LiquidGlassMaterial.CLEAR) 0.5f else 1f).coerceIn(0f, 1f),
-    )
+    val scaledTint = (tint.alpha * ratio(effects.tintOpacity, defaults.tintOpacity)).coerceIn(0f, 1f)
+    // Without blur (« Transparent ») text must stay readable: the tint never drops below 60 %.
+    val tint = tint.copy(alpha = if (!isBar && blurRadius <= 0.dp) maxOf(scaledTint, 0.6f) else scaledTint)
     val withVibrancy = withVibrancy && style.vibrancy
     val withHighlight = withHighlight && style.edgeHighlight
-    val withShadow = withShadow && style.shadow
+    val withShadow = if (own != null) own.shadow else withShadow && style.shadow
+    val depthEffect = own?.effects?.depthEffect ?: false
+    val chromaticAberration = own?.effects?.chromaticAberration ?: false
     // « Halo de verre »: a soft light rim around the surface, like around the floating bar.
-    val halo = if (GlassAppearance.glow) Modifier.border(1.dp, Color.White.copy(alpha = 0.16f), shape) else Modifier
+    val haloOn = own?.glow ?: GlassAppearance.glow
+    val halo = if (haloOn) Modifier.border(1.dp, Color.White.copy(alpha = 0.16f), shape) else Modifier
     return drawBackdrop(
             backdrop = backdrop,
             shape = { shape },
@@ -355,6 +365,8 @@ internal fun Modifier.liquidGlassSurface(
                     lens(
                         refractionHeight = refractionHeight.toPx().coerceAtMost(size.minDimension / 2f),
                         refractionAmount = refractionAmount.toPx(),
+                        depthEffect = depthEffect,
+                        chromaticAberration = chromaticAberration,
                     )
                 }
                 if (backdropOpacity < 1f) opacity(backdropOpacity.coerceIn(0f, 1f))

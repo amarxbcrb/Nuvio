@@ -1,5 +1,6 @@
 package com.nuvio.app.core.ui
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,13 +54,36 @@ fun DialogSurface(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
+    // Glass like the sheets (« Fenêtres » tab of the Liquid glass settings): the app behind is
+    // captured while the dialog is open.
+    val sheetBackdrop = LocalNuvioSheetBackdrop.current
+    if (sheetBackdrop != null) {
+        androidx.compose.runtime.DisposableEffect(sheetBackdrop) {
+            sheetBackdrop.activeSheets += 1
+            onDispose { sheetBackdrop.activeSheets -= 1 }
+        }
+    }
+    val glassReady = sheetBackdrop != null && sheetBackdrop.backdrop.isReady &&
+        com.nuvio.app.core.ui.glass.isLiquidGlassSupported() &&
+        com.nuvio.app.core.ui.glass.GlassAppearance.isEnabledFor(com.nuvio.app.core.ui.glass.GlassSurface.POPUPS)
     BasicAlertDialog(onDismissRequest = onDismissRequest, properties = properties) {
         Surface(
             modifier = modifier
                 .fillMaxWidth()
-                .widthIn(max = tokens.components.dialogMaxWidth),
+                .widthIn(max = tokens.components.dialogMaxWidth)
+                .then(
+                    if (glassReady) {
+                        Modifier.nuvioSheetSurface(
+                            backdrop = sheetBackdrop?.backdrop,
+                            shape = tokens.shapes.dialog,
+                            containerColor = tokens.colors.surfaceDialog,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
             shape = tokens.shapes.dialog,
-            color = tokens.colors.surfaceDialog,
+            color = if (glassReady) Color.Transparent else tokens.colors.surfaceDialog,
             contentColor = tokens.colors.textPrimary,
             border = BorderStroke(tokens.borders.thin, SurfaceEdge),
         ) {

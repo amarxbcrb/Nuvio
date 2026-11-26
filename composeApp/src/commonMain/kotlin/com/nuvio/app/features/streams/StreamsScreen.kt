@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -564,8 +566,11 @@ private fun MobileStreamsLayout(
                 onOpenProfiles = { showSearchSettings = true },
             ) {
                 // The same top as the title's page: its artwork, its logo, its genres.
+                // The episode's own still first: the title's backdrop often has its rating and genres
+                // printed on it, which doubled the chips below.
                 LinksHero(
-                    image = backdrop ?: heroArtwork,
+                    image = heroArtwork ?: backdrop,
+                    blurImage = isEpisode && blurEpisodeThumbnail,
                     logo = logo,
                     title = title,
                     overline = if (isEpisode && seasonNumber != null && episodeNumber != null) {
@@ -579,6 +584,20 @@ private fun MobileStreamsLayout(
                     fadeTo = if (cinematicBackground) Color.Transparent else MaterialTheme.colorScheme.background,
                 )
             }
+
+            // A soft shade under the status bar and the round buttons, so the list scrolling
+            // under them (the resume button) does not collide with them.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Black.copy(alpha = 0.72f), Color.Black.copy(alpha = 0.35f), Color.Transparent),
+                        ),
+                    ),
+            )
 
             // Search at the bottom, within reach of the thumb.
             if (showSearchField) {
@@ -717,6 +736,7 @@ private fun LinksHero(
     imdbRating: String?,
     genres: List<String>,
     fadeTo: Color,
+    blurImage: Boolean = false,
 ) {
     var logoFailed by remember(logo) { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth().height(400.dp)) {
@@ -728,6 +748,7 @@ private fun LinksHero(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
+                    .then(if (blurImage) Modifier.blur(18.dp) else Modifier)
                     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                     .drawWithContent {
                         drawContent()

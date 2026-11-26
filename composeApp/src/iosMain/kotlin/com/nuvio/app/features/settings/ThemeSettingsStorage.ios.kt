@@ -27,6 +27,7 @@ actual object ThemeSettingsStorage {
     private const val localNavBarStyleKey = "enhanced_local_nav_bar_style"
     private const val localNavBarPositionKey = "enhanced_local_nav_bar_position"
     private const val localNavBarGlassKey = "enhanced_local_nav_bar_glass"
+    private const val localGlassSurfacesKey = "enhanced_local_glass_surfaces"
     private const val localLiquidGlassEffectsKey = "enhanced_local_liquid_glass_effects"
     private const val localTabletTabBarBehaviorKey = "enhanced_local_tablet_tab_bar_behavior"
     private const val tabletTabBarBehaviorDefault = "off"
@@ -244,6 +245,13 @@ actual object ThemeSettingsStorage {
 
     actual fun saveNavBarGlass(value: String) {
         saveRawString(localNavBarGlassKey, value)
+    }
+
+    actual fun loadGlassSurfaces(): String? =
+        loadRawString(localGlassSurfacesKey)
+
+    actual fun saveGlassSurfaces(value: String) {
+        saveRawString(localGlassSurfacesKey, value)
     }
 
     actual fun loadLiquidGlassEffectsEnabled(): Boolean? {
